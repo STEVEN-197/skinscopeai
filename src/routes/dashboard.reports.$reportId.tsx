@@ -279,6 +279,57 @@ function ReportDetail() {
         </div>
       </div>
 
+      {ml && (
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-elegant md:p-6">
+          <div className="mb-1 flex items-center gap-2">
+            <Cpu className="h-4 w-4 text-primary" />
+            <h2 className="font-display text-lg font-semibold">On-device neural analysis</h2>
+            <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              Quality: {ml.imageQuality}
+            </span>
+          </div>
+          <p className="mb-4 text-xs text-muted-foreground">
+            MobileNetV2 ran in your browser ({ml.inferenceMs} ms) — image never left your device for
+            this step.
+          </p>
+          <div className="space-y-3">
+            {(["healthy", "jaundice", "redness"] as const).map((cls) => {
+              const pct = Math.round((ml.probabilities[cls] ?? 0) * 100);
+              const isTop = ml.topClass === cls;
+              return (
+                <div key={cls}>
+                  <div className="mb-1 flex items-center justify-between text-xs">
+                    <span
+                      className={
+                        isTop ? "font-semibold text-foreground" : "text-muted-foreground"
+                      }
+                    >
+                      {cls[0].toUpperCase() + cls.slice(1)}
+                      {isTop && (
+                        <span className="ml-2 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                          top
+                        </span>
+                      )}
+                    </span>
+                    <span className="font-mono tabular-nums text-muted-foreground">{pct}%</span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className={
+                        isTop
+                          ? "h-full rounded-full bg-primary transition-all"
+                          : "h-full rounded-full bg-muted-foreground/40 transition-all"
+                      }
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {cf && (
         <div className="rounded-2xl border border-border bg-card p-5 shadow-elegant md:p-6">
           <div className="mb-4 flex items-center gap-2">
