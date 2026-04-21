@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   Upload,
@@ -10,6 +10,9 @@ import {
   X,
   AlertTriangle,
   ArrowRight,
+  Camera,
+  RefreshCw,
+  SwitchCamera,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -44,11 +47,17 @@ function AnalyzePage() {
   const { user, session } = useAuth();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [region, setRegion] = useState<Region>("skin");
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [stage, setStage] = useState<string>("");
+  const [mode, setMode] = useState<"upload" | "camera">("upload");
+  const [cameraOn, setCameraOn] = useState(false);
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("environment");
+  const [cameraStarting, setCameraStarting] = useState(false);
 
   const handleFileSelect = (f: File | null) => {
     if (!f) return;
@@ -64,6 +73,86 @@ function AnalyzePage() {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(URL.createObjectURL(f));
   };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    setCameraOn(false);
+  };
+
+  const startCamera = async (facing: "user" | "environment" = facingMode) => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast.error("Camera not supported in this browser.");
+      return;
+    }
+    setCameraStarting(true);
+    try {
+      stopCamera();
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: facing }, width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false,
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play().catch(() => {});
+      }
+      setCameraOn(true);
+    } catch (e) {
+      console.error(e);
+      const msg = e instanceof Error ? e.message : "Could not access camera";
+      if (msg.toLowerCase().includes("permission") || msg.toLowerCase().includes("denied")) {
+        toast.error("Camera permission denied. Please allow camera access.");
+      } else {
+        toast.error(msg);
+      }
+    } finally {
+      setCameraStarting(false);
+    }
+  };
+
+  const switchFacing = async () => {
+    const next = facingMode === "user" ? "environment" : "user";
+    setFacingMode(next);
+    if (cameraOn) await startCamera(next);
+  };
+
+  const capturePhoto = async () => {
+    const video = videoRef.current;
+    if (!video || !video.videoWidth) {
+      toast.error("Camera not ready yet.");
+      return;
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const blob: Blob | null = await new Promise((resolve) =>
+      canvas.toBlob((b) => resolve(b), "image/jpeg", 0.92)
+    );
+    if (!blob) {
+      toast.error("Capture failed.");
+      return;
+    }
+    const captured = new File([blob], `capture-${Date.now()}.jpg`, { type: "image/jpeg" });
+    setFile(captured);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(URL.createObjectURL(captured));
+    stopCamera();
+  };
+
+  // Auto-stop camera when leaving camera mode or unmounting
+  useEffect(() => {
+    if (mode !== "camera") stopCamera();
+  }, [mode]);
+
+  useEffect(() => {
+    return () => stopCamera();
+  }, []);
 
   const reset = () => {
     setFile(null);
@@ -190,8 +279,55 @@ function AnalyzePage() {
             </div>
 
             <div>
-              <Label className="text-sm font-medium">Image</Label>
-              {!previewUrl ? (
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">Image</Label>
+                <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => { setMode("upload"); }}
+                    disabled={analyzing}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                      mode === "upload" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <Upload className="h-3.5 w-3.5" /> Upload
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setMode("camera"); reset(); }}
+                    disabled={analyzing}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                      mode === "camera" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <Camera className="h-3.5 w-3.5" /> Camera
+                  </button>
+                </div>
+              </div>
+
+              {previewUrl ? (
+                <div className="relative mt-2 overflow-hidden rounded-xl border border-border bg-muted">
+                  <img
+                    src={previewUrl}
+                    alt="Capture preview"
+                    className="max-h-[360px] w-full object-contain"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      reset();
+                      if (mode === "camera") startCamera();
+                    }}
+                    disabled={analyzing}
+                    className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-background/90 text-foreground shadow-sm backdrop-blur transition-colors hover:bg-background"
+                    aria-label="Remove image"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : mode === "upload" ? (
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
@@ -203,23 +339,77 @@ function AnalyzePage() {
                   <p className="text-xs text-muted-foreground">PNG, JPG, or HEIC · Max 8 MB</p>
                 </button>
               ) : (
-                <div className="relative mt-2 overflow-hidden rounded-xl border border-border bg-muted">
-                  {/* Image preview */}
-                  <img
-                    src={previewUrl}
-                    alt="Upload preview"
-                    className="max-h-[360px] w-full object-contain"
-                  />
-                  <button
-                    type="button"
-                    onClick={reset}
-                    disabled={analyzing}
-                    className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-background/90 text-foreground shadow-sm backdrop-blur transition-colors hover:bg-background"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
+                <div className="mt-2 space-y-3">
+                  <div className="relative overflow-hidden rounded-xl border border-border bg-black aspect-[4/3]">
+                    <video
+                      ref={videoRef}
+                      playsInline
+                      muted
+                      autoPlay
+                      className={cn(
+                        "h-full w-full object-cover",
+                        facingMode === "user" && "scale-x-[-1]",
+                        !cameraOn && "opacity-0"
+                      )}
+                    />
+                    {!cameraOn && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center text-muted-foreground">
+                        <Camera className="h-8 w-8 text-primary" />
+                        <p className="text-sm">Camera is off</p>
+                        <p className="px-6 text-xs">Tap "Start camera" and allow browser access.</p>
+                      </div>
+                    )}
+                    {cameraOn && (
+                      <button
+                        type="button"
+                        onClick={switchFacing}
+                        className="absolute right-2 top-2 grid h-9 w-9 place-items-center rounded-full bg-background/80 text-foreground shadow-sm backdrop-blur transition-colors hover:bg-background"
+                        aria-label="Switch camera"
+                      >
+                        <SwitchCamera className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    {!cameraOn ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => startCamera()}
+                        disabled={cameraStarting || analyzing}
+                      >
+                        {cameraStarting ? (
+                          <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Starting…</span>
+                        ) : (
+                          <span className="inline-flex items-center gap-2"><Camera className="h-4 w-4" /> Start camera</span>
+                        )}
+                      </Button>
+                    ) : (
+                      <>
+                        <Button
+                          type="button"
+                          className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
+                          onClick={capturePhoto}
+                          disabled={analyzing}
+                        >
+                          <Camera className="mr-2 h-4 w-4" /> Capture photo
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={stopCamera}
+                          disabled={analyzing}
+                          aria-label="Stop camera"
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
               )}
+
               <input
                 ref={fileRef}
                 type="file"
