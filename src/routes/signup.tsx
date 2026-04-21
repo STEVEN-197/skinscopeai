@@ -38,7 +38,8 @@ function SignupPage() {
       return;
     }
     setSubmitting(true);
-    const redirectTo = typeof window !== "undefined" ? window.location.origin : undefined;
+    const redirectTo =
+      typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : undefined;
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
@@ -53,11 +54,10 @@ function SignupPage() {
       return;
     }
     if (data.session) {
-      toast.success("Account created!");
-      navigate({ to: "/dashboard" });
+      toast.success("Account created — taking you to your dashboard.");
       return;
     }
-    toast.success("Account created — check your email to confirm before signing in.");
+    toast.success("Account created — check your email to confirm your account.");
     navigate({ to: "/login" });
   };
 

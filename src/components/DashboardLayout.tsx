@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, Navigate, Outlet, useRouterState } from "@tanstack/react-router";
 import { LayoutDashboard, Upload, FileText, LogOut, Menu, X } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Logo } from "@/components/Logo";
@@ -14,21 +14,14 @@ const navItems = [
 
 export function DashboardLayout({ children }: { children?: ReactNode }) {
   const { user, loading, signOut } = useAuth();
-  const navigate = useNavigate();
   const { location } = useRouterState();
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate({ to: "/login" });
-    }
-  }, [loading, user, navigate]);
 
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
 
-  if (loading || !user) {
+  if (loading) {
     return (
       <div className="grid min-h-screen place-items-center bg-gradient-subtle">
         <div className="flex items-center gap-3 text-muted-foreground">
@@ -39,9 +32,12 @@ export function DashboardLayout({ children }: { children?: ReactNode }) {
     );
   }
 
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
   const handleSignOut = async () => {
     await signOut();
-    navigate({ to: "/" });
   };
 
   const SidebarContent = () => (

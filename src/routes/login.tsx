@@ -46,8 +46,7 @@ function LoginPage() {
       toast.error(message);
       return;
     }
-    toast.success("Welcome back!");
-    navigate({ to: "/dashboard" });
+    toast.success("Signed in — taking you to your dashboard.");
   };
 
   const handleResendConfirmation = async () => {
@@ -60,7 +59,8 @@ function LoginPage() {
       type: "signup",
       email: email.trim(),
       options: {
-        emailRedirectTo: typeof window !== "undefined" ? window.location.origin : undefined,
+        emailRedirectTo:
+          typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : undefined,
       },
     });
     setResending(false);
