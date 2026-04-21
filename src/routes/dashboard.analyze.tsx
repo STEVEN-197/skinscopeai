@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   Upload,
@@ -10,6 +10,9 @@ import {
   X,
   AlertTriangle,
   ArrowRight,
+  Camera,
+  RefreshCw,
+  SwitchCamera,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -44,11 +47,17 @@ function AnalyzePage() {
   const { user, session } = useAuth();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [region, setRegion] = useState<Region>("skin");
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [stage, setStage] = useState<string>("");
+  const [mode, setMode] = useState<"upload" | "camera">("upload");
+  const [cameraOn, setCameraOn] = useState(false);
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("environment");
+  const [cameraStarting, setCameraStarting] = useState(false);
 
   const handleFileSelect = (f: File | null) => {
     if (!f) return;
@@ -64,6 +73,86 @@ function AnalyzePage() {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(URL.createObjectURL(f));
   };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    setCameraOn(false);
+  };
+
+  const startCamera = async (facing: "user" | "environment" = facingMode) => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast.error("Camera not supported in this browser.");
+      return;
+    }
+    setCameraStarting(true);
+    try {
+      stopCamera();
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: facing }, width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false,
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play().catch(() => {});
+      }
+      setCameraOn(true);
+    } catch (e) {
+      console.error(e);
+      const msg = e instanceof Error ? e.message : "Could not access camera";
+      if (msg.toLowerCase().includes("permission") || msg.toLowerCase().includes("denied")) {
+        toast.error("Camera permission denied. Please allow camera access.");
+      } else {
+        toast.error(msg);
+      }
+    } finally {
+      setCameraStarting(false);
+    }
+  };
+
+  const switchFacing = async () => {
+    const next = facingMode === "user" ? "environment" : "user";
+    setFacingMode(next);
+    if (cameraOn) await startCamera(next);
+  };
+
+  const capturePhoto = async () => {
+    const video = videoRef.current;
+    if (!video || !video.videoWidth) {
+      toast.error("Camera not ready yet.");
+      return;
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const blob: Blob | null = await new Promise((resolve) =>
+      canvas.toBlob((b) => resolve(b), "image/jpeg", 0.92)
+    );
+    if (!blob) {
+      toast.error("Capture failed.");
+      return;
+    }
+    const captured = new File([blob], `capture-${Date.now()}.jpg`, { type: "image/jpeg" });
+    setFile(captured);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(URL.createObjectURL(captured));
+    stopCamera();
+  };
+
+  // Auto-stop camera when leaving camera mode or unmounting
+  useEffect(() => {
+    if (mode !== "camera") stopCamera();
+  }, [mode]);
+
+  useEffect(() => {
+    return () => stopCamera();
+  }, []);
 
   const reset = () => {
     setFile(null);
