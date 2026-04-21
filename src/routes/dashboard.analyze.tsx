@@ -478,19 +478,21 @@ function AnalyzePage() {
                 <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
                   1
                 </span>
-                <span>We extract RGB & HSV features from your image right in your browser.</span>
+                <span>We extract RGB & HSV color features right in your browser.</span>
               </li>
               <li className="flex gap-3">
                 <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
                   2
                 </span>
-                <span>A vision model reviews the image with region-specific thresholds.</span>
+                <span>
+                  An on-device neural network (MobileNetV2) runs locally — image stays private.
+                </span>
               </li>
               <li className="flex gap-3">
                 <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
                   3
                 </span>
-                <span>Your past reports inform the trend (improving · stable · worsening).</span>
+                <span>A vision AI reviews the image and reconciles all signals + history.</span>
               </li>
             </ol>
           </div>
