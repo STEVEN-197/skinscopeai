@@ -38,14 +38,13 @@ function SignupPage() {
       return;
     }
     setSubmitting(true);
-    const redirectTo =
-      typeof window !== "undefined" ? `${window.location.origin}/dashboard` : undefined;
-    const { error } = await supabase.auth.signUp({
-      email,
+    const redirectTo = typeof window !== "undefined" ? window.location.origin : undefined;
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
       password,
       options: {
         emailRedirectTo: redirectTo,
-        data: { display_name: name },
+        data: { display_name: name.trim() },
       },
     });
     setSubmitting(false);
@@ -53,8 +52,13 @@ function SignupPage() {
       toast.error(error.message);
       return;
     }
-    toast.success("Account created! You're signed in.");
-    navigate({ to: "/dashboard" });
+    if (data.session) {
+      toast.success("Account created!");
+      navigate({ to: "/dashboard" });
+      return;
+    }
+    toast.success("Account created — check your email to confirm before signing in.");
+    navigate({ to: "/login" });
   };
 
   return (
