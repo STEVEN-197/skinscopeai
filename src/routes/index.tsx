@@ -50,15 +50,33 @@ function Index() {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:px-8">
           <Logo />
           <nav className="hidden items-center gap-6 md:flex">
-            <a href="#features" className="text-sm text-muted-foreground transition-colors hover:text-foreground">Features</a>
-            <a href="#how" className="text-sm text-muted-foreground transition-colors hover:text-foreground">How it works</a>
-            <a href="#disclaimer" className="text-sm text-muted-foreground transition-colors hover:text-foreground">Safety</a>
+            <a
+              href="#features"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Features
+            </a>
+            <a
+              href="#how"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              How it works
+            </a>
+            <a
+              href="#disclaimer"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Safety
+            </a>
           </nav>
           <div className="flex items-center gap-2">
             <Button variant="ghost" asChild className="hidden sm:inline-flex">
               <Link to="/login">Sign in</Link>
             </Button>
-            <Button asChild className="bg-gradient-hero text-primary-foreground shadow-elegant hover:opacity-95">
+            <Button
+              asChild
+              className="bg-gradient-hero text-primary-foreground shadow-elegant hover:opacity-95"
+            >
               <Link to="/signup">Get started</Link>
             </Button>
           </div>
@@ -94,9 +112,9 @@ function Index() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="mx-auto mt-5 max-w-2xl text-base text-muted-foreground md:text-lg"
           >
-            Snap a photo of your skin, eyes, or palms. SkinScope AI analyzes color,
-            tracks trends across your reports, and gives you clear, friendly insights —
-            so you know when to relax and when to check in with a doctor.
+            Snap a photo of your skin, eyes, or palms. SkinScope AI analyzes color, tracks trends
+            across your reports, and gives you clear, friendly insights — so you know when to relax
+            and when to check in with a doctor.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -104,7 +122,11 @@ function Index() {
             transition={{ duration: 0.6, delay: 0.15 }}
             className="mt-9 flex flex-wrap items-center justify-center gap-3"
           >
-            <Button asChild size="lg" className="bg-gradient-hero text-primary-foreground shadow-glow hover:opacity-95">
+            <Button
+              asChild
+              size="lg"
+              className="bg-gradient-hero text-primary-foreground shadow-glow hover:opacity-95"
+            >
               <Link to="/signup">
                 Start free analysis <ArrowRight className="ml-1.5 h-4 w-4" />
               </Link>
@@ -114,7 +136,8 @@ function Index() {
             </Button>
           </motion.div>
           <p className="mt-6 text-xs text-muted-foreground">
-            Educational wellness tool · Not a medical device · Always consult a healthcare professional
+            Educational wellness tool · Not a medical device · Always consult a healthcare
+            professional
           </p>
         </div>
       </section>
@@ -122,7 +145,9 @@ function Index() {
       {/* Features */}
       <section id="features" className="mx-auto max-w-6xl px-4 py-20 md:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="font-display text-3xl font-semibold md:text-4xl">Built for clarity & continuity</h2>
+          <h2 className="font-display text-3xl font-semibold md:text-4xl">
+            Built for clarity & continuity
+          </h2>
           <p className="mt-3 text-muted-foreground">
             Three pillars that turn a single photo into meaningful insight.
           </p>
@@ -165,17 +190,36 @@ function Index() {
       <section id="how" className="border-y border-border/60 bg-gradient-subtle py-20">
         <div className="mx-auto max-w-6xl px-4 md:px-8">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="font-display text-3xl font-semibold md:text-4xl">Three steps. One report.</h2>
+            <h2 className="font-display text-3xl font-semibold md:text-4xl">
+              Three steps. One report.
+            </h2>
           </div>
           <div className="mt-12 grid gap-5 md:grid-cols-3">
             {[
-              { n: "01", icon: Activity, t: "Upload an image", d: "Choose the region — eye, skin, or palm — then snap or upload a photo." },
-              { n: "02", icon: Sparkles, t: "AI + color analysis", d: "We blend a vision model with on-device pixel analysis tuned for that region." },
-              { n: "03", icon: FileText, t: "Get a clear report", d: "Severity, observations, trend vs. history, and a downloadable PDF." },
+              {
+                n: "01",
+                icon: Activity,
+                t: "Upload an image",
+                d: "Choose the region — eye, skin, or palm — then snap or upload a photo.",
+              },
+              {
+                n: "02",
+                icon: Sparkles,
+                t: "AI + color analysis",
+                d: "We blend a vision model with on-device pixel analysis tuned for that region.",
+              },
+              {
+                n: "03",
+                icon: FileText,
+                t: "Get a clear report",
+                d: "Severity, observations, trend vs. history, and a downloadable PDF.",
+              },
             ].map((s) => (
               <div key={s.n} className="rounded-2xl border border-border bg-card p-6 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="font-display text-2xl font-semibold text-muted-foreground/50">{s.n}</span>
+                  <span className="font-display text-2xl font-semibold text-muted-foreground/50">
+                    {s.n}
+                  </span>
                   <s.icon className="h-5 w-5 text-primary" />
                 </div>
                 <h3 className="mt-4 font-display text-lg font-semibold">{s.t}</h3>
@@ -194,8 +238,8 @@ function Index() {
             Start monitoring your wellness today
           </h2>
           <p className="relative mx-auto mt-3 max-w-xl text-primary-foreground/85">
-            Create a free account, run your first analysis in under a minute, and build
-            a personal record of how your appearance changes over time.
+            Create a free account, run your first analysis in under a minute, and build a personal
+            record of how your appearance changes over time.
           </p>
           <Button asChild size="lg" variant="secondary" className="relative mt-7">
             <Link to="/signup">
@@ -213,14 +257,18 @@ function Index() {
               <Logo />
               <p className="mt-3 max-w-md text-sm text-muted-foreground">
                 <strong className="text-foreground">Important.</strong> SkinScope AI is an
-                educational wellness tool, not a medical device, and does not provide
-                medical advice, diagnosis, or treatment. Always consult a qualified
-                healthcare professional for any concerning symptoms.
+                educational wellness tool, not a medical device, and does not provide medical
+                advice, diagnosis, or treatment. Always consult a qualified healthcare professional
+                for any concerning symptoms.
               </p>
             </div>
             <div className="flex flex-col gap-2 text-sm text-muted-foreground md:items-end">
-              <Link to="/login" className="transition-colors hover:text-foreground">Sign in</Link>
-              <Link to="/signup" className="transition-colors hover:text-foreground">Create account</Link>
+              <Link to="/login" className="transition-colors hover:text-foreground">
+                Sign in
+              </Link>
+              <Link to="/signup" className="transition-colors hover:text-foreground">
+                Create account
+              </Link>
               <p className="mt-2 text-xs">© {new Date().getFullYear()} SkinScope AI</p>
             </div>
           </div>

@@ -15,8 +15,11 @@ export interface ColorFeatures {
 }
 
 function rgbToHsv(r: number, g: number, b: number): [number, number, number] {
-  r /= 255; g /= 255; b /= 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  r /= 255;
+  g /= 255;
+  b /= 255;
+  const max = Math.max(r, g, b),
+    min = Math.min(r, g, b);
   const d = max - min;
   let h = 0;
   const s = max === 0 ? 0 : d / max;
@@ -66,16 +69,28 @@ function analyzeImageElement(img: HTMLImageElement): ColorFeatures {
   ctx.drawImage(img, 0, 0, w, h);
   const { data } = ctx.getImageData(0, 0, w, h);
 
-  let sumR = 0, sumG = 0, sumB = 0;
-  let sumH = 0, sumS = 0, sumV = 0;
-  let yellow = 0, red = 0, dark = 0;
+  let sumR = 0,
+    sumG = 0,
+    sumB = 0;
+  let sumH = 0,
+    sumS = 0,
+    sumV = 0;
+  let yellow = 0,
+    red = 0,
+    dark = 0;
   let count = 0;
 
   for (let i = 0; i < data.length; i += 4) {
-    const r = data[i], g = data[i + 1], b = data[i + 2];
-    sumR += r; sumG += g; sumB += b;
+    const r = data[i],
+      g = data[i + 1],
+      b = data[i + 2];
+    sumR += r;
+    sumG += g;
+    sumB += b;
     const [hh, ss, vv] = rgbToHsv(r, g, b);
-    sumH += hh; sumS += ss; sumV += vv;
+    sumH += hh;
+    sumS += ss;
+    sumV += vv;
 
     // Yellow hue: 35-70, with reasonable saturation/value
     if (hh >= 35 && hh <= 70 && ss >= 25 && vv >= 30) yellow++;
@@ -95,7 +110,7 @@ function analyzeImageElement(img: HTMLImageElement): ColorFeatures {
     yellowRatio: +((yellow / count) * 100).toFixed(2),
     redRatio: +((red / count) * 100).toFixed(2),
     darkRatio: +((dark / count) * 100).toFixed(2),
-    brightness: +((sumV / count)).toFixed(2),
+    brightness: +(sumV / count).toFixed(2),
   };
 }
 
@@ -106,16 +121,14 @@ export interface RuleResult {
   ruleConfidence: number;
 }
 
-export function applyRegionRules(
-  region: "eye" | "skin" | "palm",
-  f: ColorFeatures
-): RuleResult {
+export function applyRegionRules(region: "eye" | "skin" | "palm", f: ColorFeatures): RuleResult {
   // Thresholds tuned per region
-  const yellowThresh = region === "eye"
-    ? { mild: 8, moderate: 18, severe: 30 }
-    : region === "palm"
-      ? { mild: 12, moderate: 25, severe: 40 }
-      : { mild: 15, moderate: 28, severe: 45 };
+  const yellowThresh =
+    region === "eye"
+      ? { mild: 8, moderate: 18, severe: 30 }
+      : region === "palm"
+        ? { mild: 12, moderate: 25, severe: 40 }
+        : { mild: 15, moderate: 28, severe: 45 };
 
   const redThresh = { mild: 20, moderate: 35, severe: 55 };
 

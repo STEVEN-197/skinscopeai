@@ -31,17 +31,37 @@ export const Route = createRootRoute({
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Lovable App" },
-      { name: "description", content: "AI-powered web app analyzes skin, eye, and palm images to detect conditions like jaundice and burns." },
+      {
+        name: "description",
+        content:
+          "AI-powered web app analyzes skin, eye, and palm images to detect conditions like jaundice and burns.",
+      },
       { name: "author", content: "Lovable" },
       { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "AI-powered web app analyzes skin, eye, and palm images to detect conditions like jaundice and burns." },
+      {
+        property: "og:description",
+        content:
+          "AI-powered web app analyzes skin, eye, and palm images to detect conditions like jaundice and burns.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "Lovable App" },
-      { name: "twitter:description", content: "AI-powered web app analyzes skin, eye, and palm images to detect conditions like jaundice and burns." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/29570ebc-1309-43f3-aa7d-3c911eae26bc/id-preview-25552a2b--f18b77c1-41f2-49c9-8720-02a8e588f698.lovable.app-1776744020862.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/29570ebc-1309-43f3-aa7d-3c911eae26bc/id-preview-25552a2b--f18b77c1-41f2-49c9-8720-02a8e588f698.lovable.app-1776744020862.png" },
+      {
+        name: "twitter:description",
+        content:
+          "AI-powered web app analyzes skin, eye, and palm images to detect conditions like jaundice and burns.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/29570ebc-1309-43f3-aa7d-3c911eae26bc/id-preview-25552a2b--f18b77c1-41f2-49c9-8720-02a8e588f698.lovable.app-1776744020862.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/29570ebc-1309-43f3-aa7d-3c911eae26bc/id-preview-25552a2b--f18b77c1-41f2-49c9-8720-02a8e588f698.lovable.app-1776744020862.png",
+      },
     ],
     links: [
       {

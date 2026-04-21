@@ -175,7 +175,7 @@ function ReportDetail() {
       "SkinScope AI is an educational wellness tool, not a medical device. Always consult a qualified healthcare professional for any concerning symptoms.",
       margin,
       footerY + 18,
-      { maxWidth: pageWidth - margin * 2 }
+      { maxWidth: pageWidth - margin * 2 },
     );
 
     doc.save(`SkinScope-Report-${report.id.slice(0, 8)}.pdf`);
@@ -203,7 +203,13 @@ function ReportDetail() {
           <Button variant="outline" size="sm" onClick={handleDownloadPDF}>
             <Download className="mr-1.5 h-4 w-4" /> PDF
           </Button>
-          <Button variant="ghost" size="sm" onClick={handleDelete} disabled={deleting} className="text-destructive hover:bg-destructive/10 hover:text-destructive">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+          >
             <Trash2 className="mr-1.5 h-4 w-4" /> Delete
           </Button>
         </div>
@@ -223,7 +229,9 @@ function ReportDetail() {
           <div className="flex items-center gap-3">
             <SeverityBadge severity={report.severity} className="text-sm" />
             <div className="rounded-lg bg-primary/10 px-3 py-1.5 text-center">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-primary">Confidence</p>
+              <p className="text-[10px] font-medium uppercase tracking-wider text-primary">
+                Confidence
+              </p>
               <p className="font-display text-lg font-semibold text-primary">
                 {Math.round(Number(report.confidence))}%
               </p>
@@ -250,7 +258,12 @@ function ReportDetail() {
         <div className="space-y-5">
           <Section icon={Eye} title="Observations" body={report.observations} />
           <Section icon={TrendingUp} title="Trend" body={report.trend} />
-          <Section icon={ClipboardList} title="Recommendation" body={report.recommendation} accent />
+          <Section
+            icon={ClipboardList}
+            title="Recommendation"
+            body={report.recommendation}
+            accent
+          />
         </div>
       </div>
 
@@ -261,9 +274,21 @@ function ReportDetail() {
             <h2 className="font-display text-lg font-semibold">Color analysis</h2>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Metric label="Yellow ratio" value={`${cf.yellowRatio ?? 0}%`} hint="Indicator of jaundice tone" />
-            <Metric label="Red ratio" value={`${cf.redRatio ?? 0}%`} hint="Inflammation / burn signal" />
-            <Metric label="Brightness" value={`${cf.brightness ?? 0}/100`} hint="Average lightness" />
+            <Metric
+              label="Yellow ratio"
+              value={`${cf.yellowRatio ?? 0}%`}
+              hint="Indicator of jaundice tone"
+            />
+            <Metric
+              label="Red ratio"
+              value={`${cf.redRatio ?? 0}%`}
+              hint="Inflammation / burn signal"
+            />
+            <Metric
+              label="Brightness"
+              value={`${cf.brightness ?? 0}/100`}
+              hint="Average lightness"
+            />
             <Metric
               label="Avg RGB"
               value={`(${Math.round(cf.avgR ?? 0)}, ${Math.round(cf.avgG ?? 0)}, ${Math.round(cf.avgB ?? 0)})`}
@@ -336,7 +361,14 @@ function addRow(doc: jsPDF, label: string, value: string, x: number, y: number, 
   doc.text(lines, x + 90, y);
 }
 
-function section(doc: jsPDF, title: string, body: string, margin: number, y: number, pageWidth: number) {
+function section(
+  doc: jsPDF,
+  title: string,
+  body: string,
+  margin: number,
+  y: number,
+  pageWidth: number,
+) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
   doc.text(title, margin, y);

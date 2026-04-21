@@ -132,7 +132,7 @@ function AnalyzePage() {
     if (!ctx) return;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const blob: Blob | null = await new Promise((resolve) =>
-      canvas.toBlob((b) => resolve(b), "image/jpeg", 0.92)
+      canvas.toBlob((b) => resolve(b), "image/jpeg", 0.92),
     );
     if (!blob) {
       toast.error("Capture failed.");
@@ -234,7 +234,8 @@ function AnalyzePage() {
           Upload an image to analyze
         </h1>
         <p className="mt-1.5 text-muted-foreground">
-          Choose the body region, upload a clear photo in good lighting, and get an AI-powered wellness report.
+          Choose the body region, upload a clear photo in good lighting, and get an AI-powered
+          wellness report.
         </p>
       </div>
 
@@ -257,13 +258,15 @@ function AnalyzePage() {
                         "group flex flex-col items-center gap-2 rounded-xl border p-3 text-center transition-all",
                         active
                           ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/20"
-                          : "border-border hover:border-primary/40 hover:bg-muted/40"
+                          : "border-border hover:border-primary/40 hover:bg-muted/40",
                       )}
                     >
                       <div
                         className={cn(
                           "grid h-10 w-10 place-items-center rounded-lg transition-colors",
-                          active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                          active
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground",
                         )}
                       >
                         <r.icon className="h-4 w-4" />
@@ -284,22 +287,31 @@ function AnalyzePage() {
                 <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5">
                   <button
                     type="button"
-                    onClick={() => { setMode("upload"); }}
+                    onClick={() => {
+                      setMode("upload");
+                    }}
                     disabled={analyzing}
                     className={cn(
                       "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                      mode === "upload" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                      mode === "upload"
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground",
                     )}
                   >
                     <Upload className="h-3.5 w-3.5" /> Upload
                   </button>
                   <button
                     type="button"
-                    onClick={() => { setMode("camera"); reset(); }}
+                    onClick={() => {
+                      setMode("camera");
+                      reset();
+                    }}
                     disabled={analyzing}
                     className={cn(
                       "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                      mode === "camera" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                      mode === "camera"
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground",
                     )}
                   >
                     <Camera className="h-3.5 w-3.5" /> Camera
@@ -349,7 +361,7 @@ function AnalyzePage() {
                       className={cn(
                         "h-full w-full object-cover",
                         facingMode === "user" && "scale-x-[-1]",
-                        !cameraOn && "opacity-0"
+                        !cameraOn && "opacity-0",
                       )}
                     />
                     {!cameraOn && (
@@ -380,9 +392,13 @@ function AnalyzePage() {
                         disabled={cameraStarting || analyzing}
                       >
                         {cameraStarting ? (
-                          <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Starting…</span>
+                          <span className="inline-flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" /> Starting…
+                          </span>
                         ) : (
-                          <span className="inline-flex items-center gap-2"><Camera className="h-4 w-4" /> Start camera</span>
+                          <span className="inline-flex items-center gap-2">
+                            <Camera className="h-4 w-4" /> Start camera
+                          </span>
                         )}
                       </Button>
                     ) : (
@@ -445,15 +461,21 @@ function AnalyzePage() {
             <h3 className="font-display text-lg font-semibold">How it works</h3>
             <ol className="mt-3 space-y-3 text-sm text-muted-foreground">
               <li className="flex gap-3">
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">1</span>
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                  1
+                </span>
                 <span>We extract RGB & HSV features from your image right in your browser.</span>
               </li>
               <li className="flex gap-3">
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">2</span>
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                  2
+                </span>
                 <span>A vision model reviews the image with region-specific thresholds.</span>
               </li>
               <li className="flex gap-3">
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">3</span>
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                  3
+                </span>
                 <span>Your past reports inform the trend (improving · stable · worsening).</span>
               </li>
             </ol>
@@ -464,7 +486,8 @@ function AnalyzePage() {
             <div>
               <p className="font-medium text-foreground">Educational use only</p>
               <p className="mt-1 text-muted-foreground">
-                SkinScope AI does not diagnose medical conditions. Always consult a healthcare professional for any concerning findings.
+                SkinScope AI does not diagnose medical conditions. Always consult a healthcare
+                professional for any concerning findings.
               </p>
             </div>
           </div>

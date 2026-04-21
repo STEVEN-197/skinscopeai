@@ -64,7 +64,10 @@ function SignupPage() {
   return (
     <div className="grid min-h-screen place-items-center bg-gradient-subtle px-4 py-10">
       <div className="w-full max-w-md">
-        <Link to="/" className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground">
+        <Link
+          to="/"
+          className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
           <ArrowLeft className="h-4 w-4" /> Back to home
         </Link>
         <div className="rounded-2xl border border-border bg-card p-8 shadow-elegant">
@@ -123,7 +126,8 @@ function SignupPage() {
             </Link>
           </p>
           <p className="mt-4 text-center text-xs text-muted-foreground">
-            By creating an account you acknowledge SkinScope AI is an educational wellness tool, not medical advice.
+            By creating an account you acknowledge SkinScope AI is an educational wellness tool, not
+            medical advice.
           </p>
         </div>
       </div>
