@@ -55,17 +55,13 @@ function DashboardOverview() {
   const total = reports.length;
   const lastReport = reports[0];
   const avgConfidence =
-    total > 0
-      ? Math.round(reports.reduce((s, r) => s + Number(r.confidence), 0) / total)
-      : 0;
+    total > 0 ? Math.round(reports.reduce((s, r) => s + Number(r.confidence), 0) / total) : 0;
 
-  const chartData = [...reports]
-    .reverse()
-    .map((r) => ({
-      date: format(new Date(r.created_at), "MMM d"),
-      severity: SEV_SCORE[r.severity] ?? 0,
-      condition: r.condition,
-    }));
+  const chartData = [...reports].reverse().map((r) => ({
+    date: format(new Date(r.created_at), "MMM d"),
+    severity: SEV_SCORE[r.severity] ?? 0,
+    condition: r.condition,
+  }));
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
@@ -80,7 +76,11 @@ function DashboardOverview() {
             Track changes across your skin, eyes, and palms over time.
           </p>
         </div>
-        <Button asChild size="lg" className="bg-gradient-hero text-primary-foreground shadow-elegant hover:opacity-95">
+        <Button
+          asChild
+          size="lg"
+          className="bg-gradient-hero text-primary-foreground shadow-elegant hover:opacity-95"
+        >
           <Link to="/dashboard/analyze">
             <Upload className="mr-1.5 h-4 w-4" /> New analysis
           </Link>
@@ -99,7 +99,9 @@ function DashboardOverview() {
           icon={Activity}
           label="Latest severity"
           value={lastReport ? capitalize(lastReport.severity) : "—"}
-          hint={lastReport ? format(new Date(lastReport.created_at), "MMM d, yyyy") : "No reports yet"}
+          hint={
+            lastReport ? format(new Date(lastReport.created_at), "MMM d, yyyy") : "No reports yet"
+          }
         />
         <StatCard
           icon={TrendingUp}
@@ -133,7 +135,12 @@ function DashboardOverview() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.012 220)" />
                 <XAxis dataKey="date" stroke="oklch(0.50 0.025 230)" fontSize={12} />
-                <YAxis stroke="oklch(0.50 0.025 230)" fontSize={12} domain={[0, 3]} ticks={[0, 1, 2, 3]} />
+                <YAxis
+                  stroke="oklch(0.50 0.025 230)"
+                  fontSize={12}
+                  domain={[0, 3]}
+                  ticks={[0, 1, 2, 3]}
+                />
                 <Tooltip
                   contentStyle={{
                     background: "var(--card)",
@@ -170,13 +177,20 @@ function DashboardOverview() {
           </Button>
         </div>
         <div className="mt-4 divide-y divide-border">
-          {loading && <div className="py-8 text-center text-sm text-muted-foreground">Loading…</div>}
+          {loading && (
+            <div className="py-8 text-center text-sm text-muted-foreground">Loading…</div>
+          )}
           {!loading && reports.length === 0 && (
             <div className="py-12 text-center">
               <Sparkles className="mx-auto h-8 w-8 text-primary/60" />
               <p className="mt-3 font-medium">No reports yet</p>
-              <p className="text-sm text-muted-foreground">Run your first analysis to get started.</p>
-              <Button asChild className="mt-4 bg-gradient-hero text-primary-foreground hover:opacity-95">
+              <p className="text-sm text-muted-foreground">
+                Run your first analysis to get started.
+              </p>
+              <Button
+                asChild
+                className="mt-4 bg-gradient-hero text-primary-foreground hover:opacity-95"
+              >
                 <Link to="/dashboard/analyze">Start analysis</Link>
               </Button>
             </div>

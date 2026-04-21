@@ -74,7 +74,10 @@ function LoginPage() {
   return (
     <div className="grid min-h-screen place-items-center bg-gradient-subtle px-4 py-10">
       <div className="w-full max-w-md">
-        <Link to="/" className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground">
+        <Link
+          to="/"
+          className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
           <ArrowLeft className="h-4 w-4" /> Back to home
         </Link>
         <div className="rounded-2xl border border-border bg-card p-8 shadow-elegant">
@@ -121,9 +124,7 @@ function LoginPage() {
                 Create an account
               </Link>
             </p>
-            <p className="text-xs">
-              If you just signed up, confirm your email before signing in.
-            </p>
+            <p className="text-xs">If you just signed up, confirm your email before signing in.</p>
             <button
               type="button"
               onClick={handleResendConfirmation}

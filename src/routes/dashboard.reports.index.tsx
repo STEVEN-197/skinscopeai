@@ -49,7 +49,10 @@ function ReportsList() {
           </h1>
           <p className="mt-1.5 text-muted-foreground">All analyses, ordered by date.</p>
         </div>
-        <Button asChild className="bg-gradient-hero text-primary-foreground shadow-elegant hover:opacity-95">
+        <Button
+          asChild
+          className="bg-gradient-hero text-primary-foreground shadow-elegant hover:opacity-95"
+        >
           <Link to="/dashboard/analyze">
             <Plus className="mr-1.5 h-4 w-4" /> New analysis
           </Link>
@@ -65,8 +68,13 @@ function ReportsList() {
               <Sparkles className="h-5 w-5" />
             </div>
             <p className="mt-3 font-medium">No reports yet</p>
-            <p className="mt-1 text-sm text-muted-foreground">Run your first analysis to get started.</p>
-            <Button asChild className="mt-4 bg-gradient-hero text-primary-foreground hover:opacity-95">
+            <p className="mt-1 text-sm text-muted-foreground">
+              Run your first analysis to get started.
+            </p>
+            <Button
+              asChild
+              className="mt-4 bg-gradient-hero text-primary-foreground hover:opacity-95"
+            >
               <Link to="/dashboard/analyze">Start analysis</Link>
             </Button>
           </div>
@@ -86,7 +94,8 @@ function ReportsList() {
                     <div className="min-w-0">
                       <p className="truncate font-medium">{r.condition}</p>
                       <p className="text-xs text-muted-foreground">
-                        {capitalize(r.region)} · {format(new Date(r.created_at), "MMM d, yyyy · HH:mm")}
+                        {capitalize(r.region)} ·{" "}
+                        {format(new Date(r.created_at), "MMM d, yyyy · HH:mm")}
                       </p>
                     </div>
                   </div>
