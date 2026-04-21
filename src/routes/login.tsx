@@ -25,6 +25,7 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [resending, setResending] = useState(false);
 
   useEffect(() => {
     if (!loading && user) navigate({ to: "/dashboard" });
@@ -33,14 +34,41 @@ function LoginPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
     setSubmitting(false);
     if (error) {
-      toast.error(error.message);
+      const message = error.message.toLowerCase().includes("invalid login credentials")
+        ? "Couldn’t sign in. Check your email/password, and if you just signed up, confirm your email first."
+        : error.message;
+      toast.error(message);
       return;
     }
     toast.success("Welcome back!");
     navigate({ to: "/dashboard" });
+  };
+
+  const handleResendConfirmation = async () => {
+    if (!email.trim()) {
+      toast.error("Enter your email first.");
+      return;
+    }
+    setResending(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: email.trim(),
+      options: {
+        emailRedirectTo: typeof window !== "undefined" ? window.location.origin : undefined,
+      },
+    });
+    setResending(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Confirmation email sent.");
   };
 
   return (
@@ -86,12 +114,25 @@ function LoginPage() {
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign in"}
             </Button>
           </form>
-          <p className="mt-5 text-center text-sm text-muted-foreground">
-            New to SkinScope?{" "}
-            <Link to="/signup" className="font-medium text-primary hover:underline">
-              Create an account
-            </Link>
-          </p>
+          <div className="mt-5 space-y-3 text-center text-sm text-muted-foreground">
+            <p>
+              New to SkinScope?{" "}
+              <Link to="/signup" className="font-medium text-primary hover:underline">
+                Create an account
+              </Link>
+            </p>
+            <p className="text-xs">
+              If you just signed up, confirm your email before signing in.
+            </p>
+            <button
+              type="button"
+              onClick={handleResendConfirmation}
+              disabled={resending}
+              className="font-medium text-primary transition-opacity hover:underline disabled:opacity-60"
+            >
+              {resending ? "Sending confirmation…" : "Resend confirmation email"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
