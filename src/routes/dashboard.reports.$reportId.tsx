@@ -201,6 +201,7 @@ function ReportDetail() {
   }
 
   const cf = report.color_features ?? null;
+  const ml = report.ml_predictions ?? null;
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
