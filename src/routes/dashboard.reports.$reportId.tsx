@@ -13,6 +13,7 @@ import {
   ClipboardList,
   Sparkles,
   Loader2,
+  Cpu,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -23,6 +24,15 @@ export const Route = createFileRoute("/dashboard/reports/$reportId")({
   head: () => ({ meta: [{ title: "Report — SkinScope AI" }] }),
   component: ReportDetail,
 });
+
+interface MlPredictionsShape {
+  probabilities: { healthy: number; jaundice: number; redness: number };
+  topClass: "healthy" | "jaundice" | "redness";
+  topConfidence: number;
+  imageQuality: "good" | "fair" | "poor";
+  inferenceMs: number;
+  modelVersion: string;
+}
 
 interface Report {
   id: string;
@@ -35,6 +45,7 @@ interface Report {
   trend: string | null;
   image_path: string;
   color_features: Record<string, number> | null;
+  ml_predictions: MlPredictionsShape | null;
   created_at: string;
 }
 
@@ -190,6 +201,7 @@ function ReportDetail() {
   }
 
   const cf = report.color_features ?? null;
+  const ml = report.ml_predictions ?? null;
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -266,6 +278,57 @@ function ReportDetail() {
           />
         </div>
       </div>
+
+      {ml && (
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-elegant md:p-6">
+          <div className="mb-1 flex items-center gap-2">
+            <Cpu className="h-4 w-4 text-primary" />
+            <h2 className="font-display text-lg font-semibold">On-device neural analysis</h2>
+            <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              Quality: {ml.imageQuality}
+            </span>
+          </div>
+          <p className="mb-4 text-xs text-muted-foreground">
+            MobileNetV2 ran in your browser ({ml.inferenceMs} ms) — image never left your device for
+            this step.
+          </p>
+          <div className="space-y-3">
+            {(["healthy", "jaundice", "redness"] as const).map((cls) => {
+              const pct = Math.round((ml.probabilities[cls] ?? 0) * 100);
+              const isTop = ml.topClass === cls;
+              return (
+                <div key={cls}>
+                  <div className="mb-1 flex items-center justify-between text-xs">
+                    <span
+                      className={
+                        isTop ? "font-semibold text-foreground" : "text-muted-foreground"
+                      }
+                    >
+                      {cls[0].toUpperCase() + cls.slice(1)}
+                      {isTop && (
+                        <span className="ml-2 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                          top
+                        </span>
+                      )}
+                    </span>
+                    <span className="font-mono tabular-nums text-muted-foreground">{pct}%</span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className={
+                        isTop
+                          ? "h-full rounded-full bg-primary transition-all"
+                          : "h-full rounded-full bg-muted-foreground/40 transition-all"
+                      }
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {cf && (
         <div className="rounded-2xl border border-border bg-card p-5 shadow-elegant md:p-6">
