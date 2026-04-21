@@ -42,7 +42,10 @@ function AuthCallbackPage() {
               <p className="text-sm text-muted-foreground">
                 Your account is confirmed. If you’re not signed in automatically, continue to login.
               </p>
-              <Button asChild className="mt-2 bg-gradient-hero text-primary-foreground hover:opacity-95">
+              <Button
+                asChild
+                className="mt-2 bg-gradient-hero text-primary-foreground hover:opacity-95"
+              >
                 <Link to="/login">Go to sign in</Link>
               </Button>
             </>
