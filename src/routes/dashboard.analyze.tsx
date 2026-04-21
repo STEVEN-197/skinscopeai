@@ -116,8 +116,10 @@ function AnalyzePage() {
             observations: aiData.observations,
             recommendation: aiData.recommendation,
             trend: aiData.trend_note ? `${aiData.trend}: ${aiData.trend_note}` : aiData.trend,
-            color_features: colorFeatures as unknown as Record<string, number>,
-            ai_raw: aiData as Record<string, unknown>,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            color_features: colorFeatures as any,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ai_raw: aiData as any,
           },
         ])
         .select("id")
