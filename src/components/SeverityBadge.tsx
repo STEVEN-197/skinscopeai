@@ -21,15 +21,17 @@ export function SeverityBadge({ severity, className }: { severity: string; class
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium",
         styles[key] ?? styles.none,
-        className
+        className,
       )}
     >
-      <span className={cn("h-1.5 w-1.5 rounded-full", {
-        "bg-success": key === "none",
-        "bg-warning": key === "mild",
-        "bg-orange-500": key === "moderate",
-        "bg-destructive": key === "severe",
-      })} />
+      <span
+        className={cn("h-1.5 w-1.5 rounded-full", {
+          "bg-success": key === "none",
+          "bg-warning": key === "mild",
+          "bg-orange-500": key === "moderate",
+          "bg-destructive": key === "severe",
+        })}
+      />
       {labels[key] ?? "Normal"}
     </span>
   );

@@ -1,13 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
-import {
-  LayoutDashboard,
-  Upload,
-  FileText,
-  LogOut,
-  Menu,
-  X,
-} from "lucide-react";
+import { LayoutDashboard, Upload, FileText, LogOut, Menu, X } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
@@ -72,7 +65,7 @@ export function DashboardLayout({ children }: { children?: ReactNode }) {
                 "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                 active
                   ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
               )}
             >
               <item.icon className={cn("h-4 w-4 transition-colors", active && "text-primary")} />
@@ -127,9 +120,7 @@ export function DashboardLayout({ children }: { children?: ReactNode }) {
             </Button>
           </header>
 
-          <main className="flex-1 px-4 py-6 md:px-8 md:py-10">
-            {children ?? <Outlet />}
-          </main>
+          <main className="flex-1 px-4 py-6 md:px-8 md:py-10">{children ?? <Outlet />}</main>
         </div>
       </div>
     </div>
