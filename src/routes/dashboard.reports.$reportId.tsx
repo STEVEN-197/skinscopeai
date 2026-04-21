@@ -13,6 +13,7 @@ import {
   ClipboardList,
   Sparkles,
   Loader2,
+  Cpu,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -23,6 +24,15 @@ export const Route = createFileRoute("/dashboard/reports/$reportId")({
   head: () => ({ meta: [{ title: "Report — SkinScope AI" }] }),
   component: ReportDetail,
 });
+
+interface MlPredictionsShape {
+  probabilities: { healthy: number; jaundice: number; redness: number };
+  topClass: "healthy" | "jaundice" | "redness";
+  topConfidence: number;
+  imageQuality: "good" | "fair" | "poor";
+  inferenceMs: number;
+  modelVersion: string;
+}
 
 interface Report {
   id: string;
@@ -35,6 +45,7 @@ interface Report {
   trend: string | null;
   image_path: string;
   color_features: Record<string, number> | null;
+  ml_predictions: MlPredictionsShape | null;
   created_at: string;
 }
 

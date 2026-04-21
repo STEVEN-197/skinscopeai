@@ -19,6 +19,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { analyzeImageFile, applyRegionRules } from "@/lib/color-analysis";
+import { runMlAnalysis, preloadMlModel } from "@/lib/ml-classifier";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard/analyze")({
@@ -151,6 +152,8 @@ function AnalyzePage() {
   }, [mode]);
 
   useEffect(() => {
+    // Warm up the on-device CNN so the first analyze isn't slow.
+    preloadMlModel();
     return () => stopCamera();
   }, []);
 
@@ -170,7 +173,16 @@ function AnalyzePage() {
       const colorFeatures = await analyzeImageFile(file);
       const ruleResult = applyRegionRules(region, colorFeatures);
 
-      // 2. Upload image to private storage
+      // 2. On-device neural analysis (MobileNetV2 embedding + skin head)
+      setStage("Running on-device neural model…");
+      let mlPredictions = null;
+      try {
+        mlPredictions = await runMlAnalysis(file, colorFeatures);
+      } catch (mlErr) {
+        console.warn("ML inference failed, continuing without it", mlErr);
+      }
+
+      // 3. Upload image to private storage
       setStage("Uploading image securely…");
       const ext = file.name.split(".").pop() || "jpg";
       const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
@@ -179,18 +191,18 @@ function AnalyzePage() {
         .upload(path, file, { contentType: file.type });
       if (upErr) throw new Error(`Upload failed: ${upErr.message}`);
 
-      // 3. Convert to data URL for AI vision
+      // 4. Convert to data URL for AI vision
       setStage("Running AI vision analysis…");
       const imageBase64 = await fileToDataURL(file);
 
-      // 4. Call edge function
+      // 5. Call edge function with all 3 signals
       const { data: aiData, error: fnErr } = await supabase.functions.invoke("analyze-skin", {
-        body: { imageBase64, region, colorFeatures, ruleResult },
+        body: { imageBase64, region, colorFeatures, ruleResult, mlPredictions },
       });
       if (fnErr) throw new Error(fnErr.message);
       if (aiData?.error) throw new Error(aiData.error);
 
-      // 5. Persist
+      // 6. Persist
       setStage("Saving report…");
       const { data: inserted, error: insErr } = await supabase
         .from("reports")
@@ -207,6 +219,8 @@ function AnalyzePage() {
             trend: aiData.trend_note ? `${aiData.trend}: ${aiData.trend_note}` : aiData.trend,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             color_features: colorFeatures as any,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ml_predictions: mlPredictions as any,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ai_raw: aiData as any,
           },
