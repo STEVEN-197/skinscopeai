@@ -23,8 +23,6 @@
 // diagnosis.
 
 import * as tf from "@tensorflow/tfjs";
-// @ts-expect-error - @tensorflow-models/mobilenet ships its own types but
-// they are sometimes missing depending on resolution path.
 import * as mobilenet from "@tensorflow-models/mobilenet";
 import type { ColorFeatures } from "./color-analysis";
 
