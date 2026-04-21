@@ -105,19 +105,21 @@ function AnalyzePage() {
       setStage("Saving report…");
       const { data: inserted, error: insErr } = await supabase
         .from("reports")
-        .insert({
-          user_id: user.id,
-          image_path: path,
-          region,
-          condition: aiData.condition,
-          severity: aiData.severity,
-          confidence: aiData.confidence,
-          observations: aiData.observations,
-          recommendation: aiData.recommendation,
-          trend: aiData.trend_note ? `${aiData.trend}: ${aiData.trend_note}` : aiData.trend,
-          color_features: colorFeatures,
-          ai_raw: aiData,
-        })
+        .insert([
+          {
+            user_id: user.id,
+            image_path: path,
+            region,
+            condition: aiData.condition,
+            severity: aiData.severity,
+            confidence: aiData.confidence,
+            observations: aiData.observations,
+            recommendation: aiData.recommendation,
+            trend: aiData.trend_note ? `${aiData.trend}: ${aiData.trend_note}` : aiData.trend,
+            color_features: colorFeatures,
+            ai_raw: aiData,
+          },
+        ])
         .select("id")
         .single();
       if (insErr) throw new Error(insErr.message);
