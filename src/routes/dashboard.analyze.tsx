@@ -116,8 +116,8 @@ function AnalyzePage() {
             observations: aiData.observations,
             recommendation: aiData.recommendation,
             trend: aiData.trend_note ? `${aiData.trend}: ${aiData.trend_note}` : aiData.trend,
-            color_features: colorFeatures,
-            ai_raw: aiData,
+            color_features: colorFeatures as unknown as Record<string, number>,
+            ai_raw: aiData as Record<string, unknown>,
           },
         ])
         .select("id")
