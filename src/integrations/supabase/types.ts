@@ -14,7 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          ai_raw: Json | null
+          color_features: Json | null
+          condition: string
+          confidence: number
+          created_at: string
+          id: string
+          image_path: string
+          observations: string | null
+          recommendation: string | null
+          region: string
+          severity: string
+          trend: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_raw?: Json | null
+          color_features?: Json | null
+          condition: string
+          confidence?: number
+          created_at?: string
+          id?: string
+          image_path: string
+          observations?: string | null
+          recommendation?: string | null
+          region: string
+          severity: string
+          trend?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_raw?: Json | null
+          color_features?: Json | null
+          condition?: string
+          confidence?: number
+          created_at?: string
+          id?: string
+          image_path?: string
+          observations?: string | null
+          recommendation?: string | null
+          region?: string
+          severity?: string
+          trend?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
