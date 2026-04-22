@@ -12,6 +12,12 @@ export interface ColorFeatures {
   redRatio: number; // % pixels in red hue range
   darkRatio: number; // % low-value pixels
   brightness: number; // 0-100
+  blurScore: number;
+  colorCastScore: number;
+  tooDark: boolean;
+  tooBright: boolean;
+  blurry: boolean;
+  extremeColorCast: boolean;
 }
 
 function rgbToHsv(r: number, g: number, b: number): [number, number, number] {
@@ -79,8 +85,13 @@ function analyzeImageElement(img: HTMLImageElement): ColorFeatures {
     red = 0,
     dark = 0;
   let count = 0;
+  let edgeEnergy = 0;
+  let edgeCount = 0;
+
+  const luminance = new Float32Array(w * h);
 
   for (let i = 0; i < data.length; i += 4) {
+    const pixelIndex = i / 4;
     const r = data[i],
       g = data[i + 1],
       b = data[i + 2];
@@ -97,20 +108,52 @@ function analyzeImageElement(img: HTMLImageElement): ColorFeatures {
     // Red hue: wraps near 0/360
     if ((hh <= 15 || hh >= 345) && ss >= 30 && vv >= 25) red++;
     if (vv < 20) dark++;
+    luminance[pixelIndex] = 0.299 * r + 0.587 * g + 0.114 * b;
     count++;
   }
 
+  for (let y = 0; y < h - 1; y++) {
+    for (let x = 0; x < w - 1; x++) {
+      const idx = y * w + x;
+      const dx = Math.abs(luminance[idx] - luminance[idx + 1]);
+      const dy = Math.abs(luminance[idx] - luminance[idx + w]);
+      edgeEnergy += dx + dy;
+      edgeCount += 2;
+    }
+  }
+
+  const avgR = +(sumR / count).toFixed(2);
+  const avgG = +(sumG / count).toFixed(2);
+  const avgB = +(sumB / count).toFixed(2);
+  const brightness = +(sumV / count).toFixed(2);
+  const blurScore = +(edgeEnergy / Math.max(1, edgeCount)).toFixed(2);
+  const channelMean = (avgR + avgG + avgB) / 3;
+  const colorCastScore = +(
+    (Math.abs(avgR - channelMean) + Math.abs(avgG - channelMean) + Math.abs(avgB - channelMean)) /
+    3
+  ).toFixed(2);
+  const tooDark = brightness < 22 || (dark / count) * 100 > 55;
+  const tooBright = brightness > 92;
+  const blurry = blurScore < 14;
+  const extremeColorCast = colorCastScore > 36;
+
   return {
-    avgR: +(sumR / count).toFixed(2),
-    avgG: +(sumG / count).toFixed(2),
-    avgB: +(sumB / count).toFixed(2),
+    avgR,
+    avgG,
+    avgB,
     avgH: +(sumH / count).toFixed(2),
     avgS: +(sumS / count).toFixed(2),
     avgV: +(sumV / count).toFixed(2),
     yellowRatio: +((yellow / count) * 100).toFixed(2),
     redRatio: +((red / count) * 100).toFixed(2),
     darkRatio: +((dark / count) * 100).toFixed(2),
-    brightness: +(sumV / count).toFixed(2),
+    brightness,
+    blurScore,
+    colorCastScore,
+    tooDark,
+    tooBright,
+    blurry,
+    extremeColorCast,
   };
 }
 
@@ -135,34 +178,26 @@ export function applyRegionRules(region: "eye" | "skin" | "palm", f: ColorFeatur
   const y = f.yellowRatio;
   const r = f.redRatio;
 
-  let condition = "Healthy appearance";
+  let condition = "normal";
   let severity: RuleResult["severity"] = "none";
   let ruleConfidence = 60;
 
   if (y >= yellowThresh.severe) {
-    condition = "Possible jaundice (severe)";
+    condition = "jaundice_possible";
     severity = "severe";
     ruleConfidence = 88;
   } else if (y >= yellowThresh.moderate) {
-    condition = "Possible jaundice (moderate)";
+    condition = "jaundice_possible";
     severity = "moderate";
     ruleConfidence = 78;
   } else if (y >= yellowThresh.mild) {
-    condition = "Possible jaundice (mild)";
+    condition = "jaundice_possible";
     severity = "mild";
     ruleConfidence = 68;
-  } else if (r >= redThresh.severe && f.darkRatio < 15) {
-    condition = "Possible burn or severe inflammation";
-    severity = "severe";
-    ruleConfidence = 82;
-  } else if (r >= redThresh.moderate) {
-    condition = "Possible burn or inflammation";
-    severity = "moderate";
-    ruleConfidence = 74;
-  } else if (r >= redThresh.mild) {
-    condition = "Mild redness or irritation";
-    severity = "mild";
-    ruleConfidence = 65;
+  } else if (r >= redThresh.severe || r >= redThresh.moderate || r >= redThresh.mild) {
+    condition = "unclear";
+    severity = r >= redThresh.severe ? "severe" : r >= redThresh.moderate ? "moderate" : "mild";
+    ruleConfidence = r >= redThresh.severe ? 70 : r >= redThresh.moderate ? 62 : 55;
   }
 
   return { condition, severity, ruleConfidence };
