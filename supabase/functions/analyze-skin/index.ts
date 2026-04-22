@@ -224,7 +224,8 @@ Reconcile all three signals with what you actually see. If the on-device model a
                   properties: {
                     condition: {
                       type: "string",
-                      description: "Brief plain-language description of what is observed (e.g., 'Possible mild jaundice', 'Healthy appearance').",
+                      enum: ["normal", "jaundice_possible", "unclear"],
+                      description: "Closed-set wellness label. MUST be exactly one of the three enum values.",
                     },
                     severity: {
                       type: "string",
