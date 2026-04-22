@@ -168,18 +168,56 @@ function AnalyzePage() {
     if (!file || !user || !session) return;
     setAnalyzing(true);
     try {
-      // 1. Color analysis (client-side)
-      setStage("Extracting color features…");
+      // 1. Color analysis (client-side) + image-quality gate
+      setStage("Checking image quality…");
       const colorFeatures = await analyzeImageFile(file);
+
+      if (colorFeatures.tooDark) {
+        toast.error("Image is too dark. Please retake in better lighting.");
+        return;
+      }
+      if (colorFeatures.tooBright) {
+        toast.error("Image is overexposed. Please retake in softer lighting.");
+        return;
+      }
+      if (colorFeatures.blurry) {
+        toast.error("Image looks blurry. Please hold steady and retake.");
+        return;
+      }
+      if (colorFeatures.extremeColorCast) {
+        toast.error("Strong color cast detected (yellow lamp?). Use neutral daylight.");
+        return;
+      }
+
       const ruleResult = applyRegionRules(region, colorFeatures);
 
-      // 2. On-device neural analysis (MobileNetV2 embedding + skin head)
-      setStage("Running on-device neural model…");
+      // 2. On-device neural analysis + body-region validation
+      setStage("Validating body region (on-device)…");
       let mlPredictions = null;
       try {
-        mlPredictions = await runMlAnalysis(file, colorFeatures);
+        mlPredictions = await runMlAnalysis(file, colorFeatures, region);
       } catch (mlErr) {
         console.warn("ML inference failed, continuing without it", mlErr);
+      }
+
+      // Hard gate: if the on-device model is confident this is NOT a body region, stop.
+      if (mlPredictions?.bodyRegion.guess === "not_body") {
+        toast.error(
+          "Invalid image. Please upload a clear eye or skin image.",
+          { description: mlPredictions.bodyRegion.reason },
+        );
+        return;
+      }
+
+      // Sanity: strong yellow but region mismatch → reject
+      if (
+        colorFeatures.yellowRatio > 35 &&
+        mlPredictions &&
+        mlPredictions.bodyRegion.guess !== "eye_region" &&
+        mlPredictions.bodyRegion.guess !== "skin_region"
+      ) {
+        toast.error("Strong yellow detected outside a recognizable body region. Please retake.");
+        return;
       }
 
       // 3. Upload image to private storage

@@ -108,6 +108,11 @@ serve(async (req: Request) => {
         topConfidence: number;
         imageQuality: "good" | "fair" | "poor";
         modelVersion: string;
+        bodyRegion?: {
+          guess: "eye_region" | "skin_region" | "not_body";
+          confidence: number;
+          reason: string;
+        };
       } | null;
     } = body;
 
@@ -116,6 +121,17 @@ serve(async (req: Request) => {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Server-side safety gate: if client forwarded a "not_body" image,
+    // refuse to run the medical-style assessment.
+    if (mlPredictions?.bodyRegion?.guess === "not_body") {
+      return new Response(
+        JSON.stringify({
+          error: "Invalid image. Please upload a clear eye or skin image.",
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     // Pull last 5 reports for trend analysis
@@ -163,7 +179,16 @@ serve(async (req: Request) => {
 User's recent report history (most recent first):
 ${historyText}
 
-Reconcile all three signals with what you actually see in the image. If the on-device model and color rules agree, lean into that. If they disagree, weigh visual evidence and lower confidence. If image quality is "poor", explicitly say so and lower confidence. Compare with history for trend (improving / stable / worsening / first_report). Never diagnose — use "appears", "possible", "consistent with".`;
+CRITICAL OUTPUT RULES:
+- "condition" MUST be one of EXACTLY these three strings: "normal", "jaundice_possible", "unclear".
+- Do NOT mention or speculate about malaria, infections, cancer, or any disease outside jaundice signs.
+- Choose "jaundice_possible" only if visible yellowing of the sclera/skin is genuinely present.
+- Choose "normal" if the region looks healthy and unremarkable.
+- Choose "unclear" if image quality is poor, signals disagree, or you cannot confidently judge.
+- "observations" must be a short, factual visual description — no diagnoses.
+- Always recommend consulting a healthcare professional when anything other than "normal" is reported.
+
+Reconcile all three signals with what you actually see. If the on-device model and color rules agree, lean into that. If they disagree, weigh visual evidence and lower confidence. If image quality is "poor", return "unclear" with low confidence. Compare with history for trend (improving / stable / worsening / first_report).`;
 
     const aiResp = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
@@ -199,7 +224,8 @@ Reconcile all three signals with what you actually see in the image. If the on-d
                   properties: {
                     condition: {
                       type: "string",
-                      description: "Brief plain-language description of what is observed (e.g., 'Possible mild jaundice', 'Healthy appearance').",
+                      enum: ["normal", "jaundice_possible", "unclear"],
+                      description: "Closed-set wellness label. MUST be exactly one of the three enum values.",
                     },
                     severity: {
                       type: "string",
@@ -312,10 +338,26 @@ Reconcile all three signals with what you actually see in the image. If the on-d
     if (mlPredictions?.imageQuality === "poor") confidence = Math.max(20, confidence - 25);
     else if (mlPredictions?.imageQuality === "fair") confidence = Math.max(20, confidence - 10);
 
+    // Closed-set enforcement (defensive — schema already constrains this).
+    const ALLOWED = new Set(["normal", "jaundice_possible", "unclear"]);
+    let finalCondition: string = ALLOWED.has(parsed.condition) ? parsed.condition : "unclear";
+
+    // Low-confidence threshold → force "unclear" + severity "none".
+    const CONFIDENCE_THRESHOLD = 55;
+    let safeSeverity = finalSeverity;
+    if (confidence < CONFIDENCE_THRESHOLD) {
+      finalCondition = "unclear";
+      safeSeverity = "none";
+    }
+
+    // If condition is "normal" make sure severity is "none".
+    if (finalCondition === "normal") safeSeverity = "none";
+
     const result = {
-      condition: parsed.condition,
-      severity: finalSeverity,
+      condition: finalCondition,
+      severity: safeSeverity,
       raw_severity: parsed.severity,
+      raw_condition: parsed.condition,
       confidence,
       observations: parsed.observations,
       trend: histArr.length ? parsed.trend : "first_report",
