@@ -108,6 +108,11 @@ serve(async (req: Request) => {
         topConfidence: number;
         imageQuality: "good" | "fair" | "poor";
         modelVersion: string;
+        bodyRegion?: {
+          guess: "eye_region" | "skin_region" | "not_body";
+          confidence: number;
+          reason: string;
+        };
       } | null;
     } = body;
 
@@ -116,6 +121,17 @@ serve(async (req: Request) => {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Server-side safety gate: if client forwarded a "not_body" image,
+    // refuse to run the medical-style assessment.
+    if (mlPredictions?.bodyRegion?.guess === "not_body") {
+      return new Response(
+        JSON.stringify({
+          error: "Invalid image. Please upload a clear eye or skin image.",
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     // Pull last 5 reports for trend analysis
