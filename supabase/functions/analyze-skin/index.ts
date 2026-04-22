@@ -338,10 +338,26 @@ Reconcile all three signals with what you actually see. If the on-device model a
     if (mlPredictions?.imageQuality === "poor") confidence = Math.max(20, confidence - 25);
     else if (mlPredictions?.imageQuality === "fair") confidence = Math.max(20, confidence - 10);
 
+    // Closed-set enforcement (defensive — schema already constrains this).
+    const ALLOWED = new Set(["normal", "jaundice_possible", "unclear"]);
+    let finalCondition: string = ALLOWED.has(parsed.condition) ? parsed.condition : "unclear";
+
+    // Low-confidence threshold → force "unclear" + severity "none".
+    const CONFIDENCE_THRESHOLD = 55;
+    let safeSeverity = finalSeverity;
+    if (confidence < CONFIDENCE_THRESHOLD) {
+      finalCondition = "unclear";
+      safeSeverity = "none";
+    }
+
+    // If condition is "normal" make sure severity is "none".
+    if (finalCondition === "normal") safeSeverity = "none";
+
     const result = {
-      condition: parsed.condition,
-      severity: finalSeverity,
+      condition: finalCondition,
+      severity: safeSeverity,
       raw_severity: parsed.severity,
+      raw_condition: parsed.condition,
       confidence,
       observations: parsed.observations,
       trend: histArr.length ? parsed.trend : "first_report",
