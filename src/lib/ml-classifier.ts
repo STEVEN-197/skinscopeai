@@ -162,14 +162,166 @@ function classify(features: number[]): Record<MlClass, number> {
   };
 }
 
+// ImageNet label heuristics for body-region detection.
+// MobileNet returns plain-text class names (e.g. "Granny Smith", "iPod").
+// We don't need a perfect mapping — we just need to filter out obvious
+// "not a body part" cases (food, devices, animals, vehicles, scenery).
+const BODY_HINTS = [
+  "skin",
+  "face",
+  "hand",
+  "arm",
+  "leg",
+  "finger",
+  "thumb",
+  "palm",
+  "eye",
+  "nose",
+  "lip",
+  "ear",
+  "head",
+  "person",
+  "wig",
+  "mask",
+  "bathing",
+  "swim",
+  "bandage",
+];
+const NON_BODY_STRONG = [
+  "screen",
+  "monitor",
+  "laptop",
+  "keyboard",
+  "phone",
+  "ipod",
+  "remote",
+  "book",
+  "envelope",
+  "menu",
+  "comic",
+  "website",
+  "packet",
+  "carton",
+  "container",
+  "bottle",
+  "cup",
+  "plate",
+  "bowl",
+  "vase",
+  "lamp",
+  "chair",
+  "table",
+  "desk",
+  "car",
+  "truck",
+  "bus",
+  "bicycle",
+  "motorcycle",
+  "boat",
+  "airplane",
+  "train",
+  "wall",
+  "fence",
+  "tile",
+  "carpet",
+  "rug",
+  "curtain",
+  "tree",
+  "flower",
+  "leaf",
+  "fruit",
+  "vegetable",
+  "pizza",
+  "burger",
+  "sandwich",
+  "dog",
+  "cat",
+  "bird",
+  "fish",
+  "horse",
+  "cow",
+  "sheep",
+  "toy",
+  "doll",
+  "teddy",
+  "clock",
+  "watch",
+  "coin",
+  "currency",
+];
+
+function classifyBodyRegion(
+  imagenet: { className: string; probability: number }[],
+  declaredRegion: "eye" | "skin" | "palm",
+  colorFeatures: ColorFeatures,
+): BodyRegionDetection {
+  const top = imagenet.slice(0, 5).map((p) => ({
+    label: p.className.toLowerCase(),
+    score: p.probability,
+  }));
+
+  const isBodyHit = (l: string) => BODY_HINTS.some((h) => l.includes(h));
+  const isNonBodyHit = (l: string) => NON_BODY_STRONG.some((h) => l.includes(h));
+
+  const bodyScore = top.filter((t) => isBodyHit(t.label)).reduce((s, t) => s + t.score, 0);
+  const nonBodyScore = top.filter((t) => isNonBodyHit(t.label)).reduce((s, t) => s + t.score, 0);
+
+  // Skin-tone sanity: real body regions usually have R >= G >= B and warm tones.
+  const r = colorFeatures.avgR;
+  const g = colorFeatures.avgG;
+  const b = colorFeatures.avgB;
+  const skinTonePlausible = r > b && r >= g - 5 && r > 60 && r < 240 && g > 40 && b > 20;
+
+  let guess: BodyRegionGuess;
+  let confidence: number;
+  let reason: string;
+
+  if (nonBodyScore > 0.4 && nonBodyScore > bodyScore) {
+    guess = "not_body";
+    confidence = Math.round(Math.min(95, nonBodyScore * 100));
+    reason = `Image looks like an object (top label: "${top[0]?.label ?? "unknown"}"), not a body region.`;
+  } else if (!skinTonePlausible && nonBodyScore > 0.15 && bodyScore < 0.1) {
+    guess = "not_body";
+    confidence = 70;
+    reason = `Color profile and content do not resemble skin or eye tissue (top label: "${top[0]?.label ?? "unknown"}").`;
+  } else {
+    guess = declaredRegion === "eye" ? "eye_region" : "skin_region";
+    confidence = Math.round(Math.min(95, Math.max(40, bodyScore * 100 + (skinTonePlausible ? 30 : 0))));
+    reason = bodyScore > 0
+      ? `Visual content consistent with a body region (hint: "${top[0]?.label ?? "unknown"}").`
+      : "No strong non-body cues detected; treating as a valid body region.";
+  }
+
+  return { guess, confidence, topImageNetLabels: top.map((t) => ({ label: t.label, score: +t.score.toFixed(3) })), reason };
+}
+
 export async function runMlAnalysis(
   file: File,
   colorFeatures: ColorFeatures,
+  declaredRegion: "eye" | "skin" | "palm" = "skin",
 ): Promise<MlPredictions> {
   const t0 = performance.now();
   const { net } = await loadModel();
   const img = await fileToImageElement(file);
   const { vec, norm } = await extractEmbedding(net, img);
+
+  // ImageNet classification (top-5) for body-region detection.
+  let bodyRegion: BodyRegionDetection;
+  try {
+    const imagenet = (await net.classify(img, 5)) as {
+      className: string;
+      probability: number;
+    }[];
+    bodyRegion = classifyBodyRegion(imagenet, declaredRegion, colorFeatures);
+  } catch (e) {
+    console.warn("Body-region classification failed", e);
+    bodyRegion = {
+      guess: declaredRegion === "eye" ? "eye_region" : "skin_region",
+      confidence: 50,
+      topImageNetLabels: [],
+      reason: "Body-region detector unavailable; allowing image through.",
+    };
+  }
 
   // Embedding stats — normalized to roughly [0,1].
   let mean = 0;
@@ -210,5 +362,6 @@ export async function runMlAnalysis(
     imageQuality,
     inferenceMs: Math.round(performance.now() - t0),
     modelVersion: MODEL_VERSION,
+    bodyRegion,
   };
 }
