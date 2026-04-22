@@ -179,7 +179,16 @@ serve(async (req: Request) => {
 User's recent report history (most recent first):
 ${historyText}
 
-Reconcile all three signals with what you actually see in the image. If the on-device model and color rules agree, lean into that. If they disagree, weigh visual evidence and lower confidence. If image quality is "poor", explicitly say so and lower confidence. Compare with history for trend (improving / stable / worsening / first_report). Never diagnose — use "appears", "possible", "consistent with".`;
+CRITICAL OUTPUT RULES:
+- "condition" MUST be one of EXACTLY these three strings: "normal", "jaundice_possible", "unclear".
+- Do NOT mention or speculate about malaria, infections, cancer, or any disease outside jaundice signs.
+- Choose "jaundice_possible" only if visible yellowing of the sclera/skin is genuinely present.
+- Choose "normal" if the region looks healthy and unremarkable.
+- Choose "unclear" if image quality is poor, signals disagree, or you cannot confidently judge.
+- "observations" must be a short, factual visual description — no diagnoses.
+- Always recommend consulting a healthcare professional when anything other than "normal" is reported.
+
+Reconcile all three signals with what you actually see. If the on-device model and color rules agree, lean into that. If they disagree, weigh visual evidence and lower confidence. If image quality is "poor", return "unclear" with low confidence. Compare with history for trend (improving / stable / worsening / first_report).`;
 
     const aiResp = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
