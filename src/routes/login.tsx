@@ -20,7 +20,7 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, refreshSession } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,6 +38,7 @@ function LoginPage() {
       email: email.trim(),
       password,
     });
+    const session = error ? null : await refreshSession();
     setSubmitting(false);
     if (error) {
       const message = error.message.toLowerCase().includes("invalid login credentials")
@@ -46,7 +47,12 @@ function LoginPage() {
       toast.error(message);
       return;
     }
+    if (!session) {
+      toast.error("Sign-in succeeded, but the session could not be restored. Please try again.");
+      return;
+    }
     toast.success("Signed in — taking you to your dashboard.");
+    navigate({ to: "/dashboard", replace: true });
   };
 
   const handleResendConfirmation = async () => {
