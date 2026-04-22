@@ -28,6 +28,15 @@ import type { ColorFeatures } from "./color-analysis";
 
 export type MlClass = "healthy" | "jaundice" | "redness";
 
+export type BodyRegionGuess = "eye_region" | "skin_region" | "not_body";
+
+export interface BodyRegionDetection {
+  guess: BodyRegionGuess;
+  confidence: number; // 0-100
+  topImageNetLabels: { label: string; score: number }[];
+  reason: string;
+}
+
 export interface MlPredictions {
   probabilities: Record<MlClass, number>;
   topClass: MlClass;
@@ -36,6 +45,7 @@ export interface MlPredictions {
   imageQuality: "good" | "fair" | "poor";
   inferenceMs: number;
   modelVersion: string;
+  bodyRegion: BodyRegionDetection;
 }
 
 interface LoadedModel {
