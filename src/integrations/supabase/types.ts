@@ -50,7 +50,6 @@ export type Database = {
           created_at: string
           id: string
           image_path: string
-          ml_predictions: Json | null
           observations: string | null
           recommendation: string | null
           region: string
@@ -66,7 +65,6 @@ export type Database = {
           created_at?: string
           id?: string
           image_path: string
-          ml_predictions?: Json | null
           observations?: string | null
           recommendation?: string | null
           region: string
@@ -82,7 +80,6 @@ export type Database = {
           created_at?: string
           id?: string
           image_path?: string
-          ml_predictions?: Json | null
           observations?: string | null
           recommendation?: string | null
           region?: string
