@@ -111,6 +111,10 @@ function ReportsList() {
           </ul>
         )}
       </div>
+
+      <p className="pt-2 text-center text-xs text-muted-foreground">
+        Crafted by <span className="font-medium text-foreground/80">Steven Tm</span>
+      </p>
     </div>
   );
 }
