@@ -13,6 +13,10 @@ import {
   Camera,
   RefreshCw,
   SwitchCamera,
+  BrainCircuit,
+  ScanLine,
+  ShieldCheck,
+  Activity,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -169,7 +173,7 @@ function AnalyzePage() {
     setAnalyzing(true);
     try {
       // 1. Color analysis (client-side) + image-quality gate
-      setStage("Checking image quality…");
+      setStage("Calibrating image quality…");
       const colorFeatures = await analyzeImageFile(file);
 
       if (colorFeatures.tooDark) {
@@ -181,8 +185,9 @@ function AnalyzePage() {
         return;
       }
       if (colorFeatures.blurry) {
-        toast.error("Image looks blurry. Please hold steady and retake.");
-        return;
+        toast.warning("Image is a little soft, but the scan will continue.", {
+          description: "For best accuracy, use a steady close-up in daylight.",
+        });
       }
       if (colorFeatures.extremeColorCast) {
         toast.error("Strong color cast detected (yellow lamp?). Use neutral daylight.");
@@ -192,7 +197,7 @@ function AnalyzePage() {
       const ruleResult = applyRegionRules(region, colorFeatures);
 
       // 2. On-device neural analysis + body-region validation
-      setStage("Validating body region (on-device)…");
+      setStage("Locating skin/eye tissue…");
       let mlPredictions = null;
       try {
         mlPredictions = await runMlAnalysis(file, colorFeatures, region);
@@ -230,7 +235,7 @@ function AnalyzePage() {
       if (upErr) throw new Error(`Upload failed: ${upErr.message}`);
 
       // 4. Convert to data URL for AI vision
-      setStage("Running AI vision analysis…");
+      setStage("Reconciling neural + vision signals…");
       const imageBase64 = await fileToDataURL(file);
 
       // 5. Call edge function with all 3 signals
