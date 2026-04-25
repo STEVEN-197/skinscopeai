@@ -57,7 +57,7 @@ interface LoadedModel {
 let loadingPromise: Promise<LoadedModel> | null = null;
 let cached: LoadedModel | null = null;
 
-const MODEL_VERSION = "mobilenet-v2-1.0-224 + skin-head-v1";
+const MODEL_VERSION = "mobilenet-v2-1.0-224 + tissue-gate-v2";
 
 async function loadModel(): Promise<LoadedModel> {
   if (cached) return cached;
@@ -266,30 +266,41 @@ function classifyBodyRegion(
   const bodyScore = top.filter((t) => isBodyHit(t.label)).reduce((s, t) => s + t.score, 0);
   const nonBodyScore = top.filter((t) => isNonBodyHit(t.label)).reduce((s, t) => s + t.score, 0);
 
-  // Skin-tone sanity: real body regions usually have R >= G >= B and warm tones.
+  // Tissue gate: combine the CNN labels with pixel-level skin/eye evidence.
+  // This is intentionally stronger than ImageNet alone because close-up eye/skin
+  // photos are often mislabeled as generic textures or objects by MobileNet.
   const r = colorFeatures.avgR;
   const g = colorFeatures.avgG;
   const b = colorFeatures.avgB;
-  const skinTonePlausible = r > b && r >= g - 5 && r > 60 && r < 240 && g > 40 && b > 20;
+  const skinTonePlausible = r > b && r >= g - 18 && r > 45 && r < 250 && g > 28 && b > 18;
+  const tissueCoverage = Math.max(colorFeatures.skinPixelRatio, colorFeatures.eyeWhiteRatio);
+  const regionEvidence =
+    declaredRegion === "eye"
+      ? colorFeatures.eyeWhiteRatio >= 8 || colorFeatures.skinPixelRatio >= 10
+      : colorFeatures.skinPixelRatio >= 12 || colorFeatures.eyeWhiteRatio >= 18;
+  const validTissueEvidence = regionEvidence || (skinTonePlausible && tissueCoverage >= 6);
+  const strongObjectEvidence = nonBodyScore > 0.5 && nonBodyScore > bodyScore * 1.7;
 
   let guess: BodyRegionGuess;
   let confidence: number;
   let reason: string;
 
-  if (nonBodyScore > 0.4 && nonBodyScore > bodyScore) {
+  if (strongObjectEvidence && !validTissueEvidence) {
     guess = "not_body";
     confidence = Math.round(Math.min(95, nonBodyScore * 100));
     reason = `Image looks like an object (top label: "${top[0]?.label ?? "unknown"}"), not a body region.`;
-  } else if (!skinTonePlausible && nonBodyScore > 0.15 && bodyScore < 0.1) {
+  } else if (!validTissueEvidence && nonBodyScore > 0.22 && bodyScore < 0.12) {
     guess = "not_body";
-    confidence = 70;
-    reason = `Color profile and content do not resemble skin or eye tissue (top label: "${top[0]?.label ?? "unknown"}").`;
+    confidence = 68;
+    reason = `Low skin/eye tissue evidence and object-like content detected (top label: "${top[0]?.label ?? "unknown"}").`;
   } else {
     guess = declaredRegion === "eye" ? "eye_region" : "skin_region";
-    confidence = Math.round(Math.min(95, Math.max(40, bodyScore * 100 + (skinTonePlausible ? 30 : 0))));
-    reason = bodyScore > 0
-      ? `Visual content consistent with a body region (hint: "${top[0]?.label ?? "unknown"}").`
-      : "No strong non-body cues detected; treating as a valid body region.";
+    confidence = Math.round(
+      Math.min(96, Math.max(45, bodyScore * 100 + tissueCoverage * 1.15 + (skinTonePlausible ? 18 : 0))),
+    );
+    reason = validTissueEvidence
+      ? `Skin/eye tissue evidence detected (${Math.round(tissueCoverage)}% coverage).`
+      : "No strong object cues detected; allowing image for safer AI review.";
   }
 
   return { guess, confidence, topImageNetLabels: top.map((t) => ({ label: t.label, score: +t.score.toFixed(3) })), reason };
