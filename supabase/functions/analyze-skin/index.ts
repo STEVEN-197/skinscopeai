@@ -96,24 +96,11 @@ serve(async (req: Request) => {
       region,
       colorFeatures,
       ruleResult,
-      mlPredictions,
     }: {
       imageBase64: string;
       region: "eye" | "skin" | "palm";
       colorFeatures: ColorFeatures;
       ruleResult: RuleResult;
-      mlPredictions?: {
-        probabilities: { healthy: number; jaundice: number; redness: number };
-        topClass: "healthy" | "jaundice" | "redness";
-        topConfidence: number;
-        imageQuality: "good" | "fair" | "poor";
-        modelVersion: string;
-        bodyRegion?: {
-          guess: "eye_region" | "skin_region" | "not_body";
-          confidence: number;
-          reason: string;
-        };
-      } | null;
     } = body;
 
     if (!imageBase64 || !region || !colorFeatures || !ruleResult) {
@@ -121,17 +108,6 @@ serve(async (req: Request) => {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
-    }
-
-    // Server-side safety gate: if client forwarded a "not_body" image,
-    // refuse to run the medical-style assessment.
-    if (mlPredictions?.bodyRegion?.guess === "not_body") {
-      return new Response(
-        JSON.stringify({
-          error: "Invalid image. Please upload a clear eye or skin image.",
-        }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
     }
 
     // Pull last 5 reports for trend analysis
@@ -151,44 +127,26 @@ serve(async (req: Request) => {
           .join("\n")
       : "No previous reports.";
 
-    const mlText = mlPredictions
-      ? `On-device neural model (MobileNetV2 + skin head):
-- Top class: ${mlPredictions.topClass} (${mlPredictions.topConfidence}%)
-- Probabilities: healthy ${(mlPredictions.probabilities.healthy * 100).toFixed(1)}%, jaundice ${(mlPredictions.probabilities.jaundice * 100).toFixed(1)}%, redness ${(mlPredictions.probabilities.redness * 100).toFixed(1)}%
-- Image quality: ${mlPredictions.imageQuality}`
-      : "On-device neural model: not available for this analysis.";
-
     const systemPrompt = `You are SkinScope AI, an educational wellness assistant that analyzes images of skin, eyes, or palms for visible color-based signs (yellowing suggesting possible jaundice, redness suggesting possible burns or inflammation). You are NOT a medical device and must never give a clinical diagnosis. Be cautious, emphasize "possible" / "appears", and always recommend consulting a healthcare professional for any concerning findings. Always return valid JSON via the provided tool.`;
 
-    const userPrompt = `Analyze this ${region} image using THREE independent signals.
+    const userPrompt = `Analyze this ${region} image.
 
-1. Client-side color analysis:
+Client-side color analysis:
 - Yellow pixel ratio: ${colorFeatures.yellowRatio}%
 - Red pixel ratio: ${colorFeatures.redRatio}%
 - Dark pixel ratio: ${colorFeatures.darkRatio}%
 - Brightness: ${colorFeatures.brightness}/100
 - Avg RGB: (${colorFeatures.avgR}, ${colorFeatures.avgG}, ${colorFeatures.avgB})
 
-2. Rule-based pre-assessment:
+Rule-based pre-assessment:
 - Condition: ${ruleResult.condition}
 - Severity: ${ruleResult.severity}
 - Rule confidence: ${ruleResult.ruleConfidence}%
 
-3. ${mlText}
-
 User's recent report history (most recent first):
 ${historyText}
 
-CRITICAL OUTPUT RULES:
-- "condition" MUST be one of EXACTLY these three strings: "normal", "jaundice_possible", "unclear".
-- Do NOT mention or speculate about malaria, infections, cancer, or any disease outside jaundice signs.
-- Choose "jaundice_possible" only if visible yellowing of the sclera/skin is genuinely present.
-- Choose "normal" if the region looks healthy and unremarkable.
-- Choose "unclear" if image quality is poor, signals disagree, or you cannot confidently judge.
-- "observations" must be a short, factual visual description — no diagnoses.
-- Always recommend consulting a healthcare professional when anything other than "normal" is reported.
-
-Reconcile all three signals with what you actually see. If the on-device model and color rules agree, lean into that. If they disagree, weigh visual evidence and lower confidence. If image quality is "poor", return "unclear" with low confidence. Compare with history for trend (improving / stable / worsening / first_report).`;
+Provide a structured wellness assessment. Confirm or refine the rule-based finding using what you see in the image. Note image quality issues if any. Compare with history to identify trend (improving / stable / worsening / first_report). Never diagnose — use "appears", "possible", "consistent with".`;
 
     const aiResp = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
@@ -224,8 +182,7 @@ Reconcile all three signals with what you actually see. If the on-device model a
                   properties: {
                     condition: {
                       type: "string",
-                      enum: ["normal", "jaundice_possible", "unclear"],
-                      description: "Closed-set wellness label. MUST be exactly one of the three enum values.",
+                      description: "Brief plain-language description of what is observed (e.g., 'Possible mild jaundice', 'Healthy appearance').",
                     },
                     severity: {
                       type: "string",
@@ -307,65 +264,25 @@ Reconcile all three signals with what you actually see. If the on-device model a
 
     const parsed = JSON.parse(toolCall.function.arguments);
 
-    // Weighted final severity:
-    //   50% Gemini  +  30% on-device ML  +  20% historical mean
-    // (falls back gracefully if ML or history are missing)
+    // Weighted final severity: 70% current AI + 30% historical mean
     const histArr = (history as HistoryItem[] | null) ?? [];
-    const aiScore = SEVERITY_SCORE[parsed.severity] ?? 0;
-
-    let mlScore = aiScore;
-    if (mlPredictions) {
-      // Map ML probabilities → 0..3 severity scale.
-      // healthy=0, jaundice/redness contribute up to 3 based on probability.
-      const p = mlPredictions.probabilities;
-      const nonHealthy = (p.jaundice ?? 0) + (p.redness ?? 0);
-      mlScore = nonHealthy * 3;
-    }
-
     const histScore = histArr.length
       ? histArr.reduce((sum, h) => sum + (SEVERITY_SCORE[h.severity] ?? 0), 0) / histArr.length
-      : aiScore;
-
-    const wAi = 0.5;
-    const wMl = mlPredictions ? 0.3 : 0;
-    const wHist = histArr.length ? 0.2 : 0;
-    const wTotal = wAi + wMl + wHist || 1;
-    const blended = (aiScore * wAi + mlScore * wMl + histScore * wHist) / wTotal;
+      : SEVERITY_SCORE[parsed.severity] ?? 0;
+    const currentScore = SEVERITY_SCORE[parsed.severity] ?? 0;
+    const blended = currentScore * 0.7 + histScore * 0.3;
     const finalSeverity = severityFromScore(blended);
 
-    // Quality penalty: if on-device model flagged a poor image, knock confidence down.
-    let confidence = Math.min(99, Math.max(20, Math.round(parsed.confidence)));
-    if (mlPredictions?.imageQuality === "poor") confidence = Math.max(20, confidence - 25);
-    else if (mlPredictions?.imageQuality === "fair") confidence = Math.max(20, confidence - 10);
-
-    // Closed-set enforcement (defensive — schema already constrains this).
-    const ALLOWED = new Set(["normal", "jaundice_possible", "unclear"]);
-    let finalCondition: string = ALLOWED.has(parsed.condition) ? parsed.condition : "unclear";
-
-    // Low-confidence threshold → force "unclear" + severity "none".
-    const CONFIDENCE_THRESHOLD = 55;
-    let safeSeverity = finalSeverity;
-    if (confidence < CONFIDENCE_THRESHOLD) {
-      finalCondition = "unclear";
-      safeSeverity = "none";
-    }
-
-    // If condition is "normal" make sure severity is "none".
-    if (finalCondition === "normal") safeSeverity = "none";
-
     const result = {
-      condition: finalCondition,
-      severity: safeSeverity,
+      condition: parsed.condition,
+      severity: finalSeverity,
       raw_severity: parsed.severity,
-      raw_condition: parsed.condition,
-      confidence,
+      confidence: Math.min(99, Math.max(20, Math.round(parsed.confidence))),
       observations: parsed.observations,
       trend: histArr.length ? parsed.trend : "first_report",
       trend_note: parsed.trend_note,
       recommendation: parsed.recommendation,
       historical_count: histArr.length,
-      signal_weights: { ai: wAi / wTotal, ml: wMl / wTotal, history: wHist / wTotal },
-      ml_used: !!mlPredictions,
     };
 
     return new Response(JSON.stringify(result), {

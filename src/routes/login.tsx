@@ -20,13 +20,12 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
-  const { user, loading, refreshSession } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && user) navigate({ to: "/dashboard" });
@@ -34,46 +33,27 @@ function LoginPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setAuthError(null);
     setSubmitting(true);
-
     const { error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password,
     });
-
-    const session = error ? null : await refreshSession();
     setSubmitting(false);
-
     if (error) {
       const message = error.message.toLowerCase().includes("invalid login credentials")
-        ? "Couldn’t sign in. The email or password is incorrect, or the account email still needs confirmation."
+        ? "Couldn’t sign in. Check your email/password, and if you just signed up, confirm your email first."
         : error.message;
-      setAuthError(message);
       toast.error(message);
       return;
     }
-
-    if (!session) {
-      const message = "Sign-in succeeded, but the session could not be restored. Please try again.";
-      setAuthError(message);
-      toast.error(message);
-      return;
-    }
-
     toast.success("Signed in — taking you to your dashboard.");
-    navigate({ to: "/dashboard", replace: true });
   };
 
   const handleResendConfirmation = async () => {
     if (!email.trim()) {
-      const message = "Enter your email first.";
-      setAuthError(message);
-      toast.error(message);
+      toast.error("Enter your email first.");
       return;
     }
-
-    setAuthError(null);
     setResending(true);
     const { error } = await supabase.auth.resend({
       type: "signup",
@@ -84,13 +64,10 @@ function LoginPage() {
       },
     });
     setResending(false);
-
     if (error) {
-      setAuthError(error.message);
       toast.error(error.message);
       return;
     }
-
     toast.success("Confirmation email sent.");
   };
 
@@ -118,10 +95,7 @@ function LoginPage() {
                 required
                 autoComplete="email"
                 value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  if (authError) setAuthError(null);
-                }}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="space-y-1.5">
@@ -132,21 +106,9 @@ function LoginPage() {
                 required
                 autoComplete="current-password"
                 value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  if (authError) setAuthError(null);
-                }}
+                onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-            {authError ? (
-              <p
-                role="alert"
-                aria-live="polite"
-                className="rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-              >
-                {authError}
-              </p>
-            ) : null}
             <Button
               type="submit"
               disabled={submitting}

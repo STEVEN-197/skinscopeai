@@ -6,7 +6,6 @@ interface AuthContextValue {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  refreshSession: () => Promise<Session | null>;
   signOut: () => Promise<void>;
 }
 
@@ -50,29 +49,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const refreshSession = async () => {
-    try {
-      const { data, error } = await supabase.auth.getSession();
-      if (error) throw error;
-      setSession(data.session ?? null);
-      setUser(data.session?.user ?? null);
-      setLoading(false);
-      return data.session ?? null;
-    } catch (error) {
-      console.error("Failed to refresh session", error);
-      setSession(null);
-      setUser(null);
-      setLoading(false);
-      return null;
-    }
-  };
-
   const signOut = async () => {
     await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, refreshSession, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );

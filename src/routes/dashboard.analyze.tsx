@@ -13,17 +13,12 @@ import {
   Camera,
   RefreshCw,
   SwitchCamera,
-  BrainCircuit,
-  ScanLine,
-  ShieldCheck,
-  Activity,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { analyzeImageFile, applyRegionRules } from "@/lib/color-analysis";
-import { runMlAnalysis, preloadMlModel } from "@/lib/ml-classifier";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard/analyze")({
@@ -156,8 +151,6 @@ function AnalyzePage() {
   }, [mode]);
 
   useEffect(() => {
-    // Warm up the on-device CNN so the first analyze isn't slow.
-    preloadMlModel();
     return () => stopCamera();
   }, []);
 
@@ -172,60 +165,12 @@ function AnalyzePage() {
     if (!file || !user || !session) return;
     setAnalyzing(true);
     try {
-      // 1. Color analysis (client-side) + image-quality gate
-      setStage("Calibrating image quality…");
+      // 1. Color analysis (client-side)
+      setStage("Extracting color features…");
       const colorFeatures = await analyzeImageFile(file);
-
-      if (colorFeatures.tooDark) {
-        toast.error("Image is too dark. Please retake in better lighting.");
-        return;
-      }
-      if (colorFeatures.tooBright) {
-        toast.error("Image is overexposed. Please retake in softer lighting.");
-        return;
-      }
-      if (colorFeatures.blurry) {
-        toast.warning("Image is a little soft, but the scan will continue.", {
-          description: "For best accuracy, use a steady close-up in daylight.",
-        });
-      }
-      if (colorFeatures.extremeColorCast) {
-        toast.error("Strong color cast detected (yellow lamp?). Use neutral daylight.");
-        return;
-      }
-
       const ruleResult = applyRegionRules(region, colorFeatures);
 
-      // 2. On-device neural analysis + body-region validation
-      setStage("Locating skin/eye tissue…");
-      let mlPredictions = null;
-      try {
-        mlPredictions = await runMlAnalysis(file, colorFeatures, region);
-      } catch (mlErr) {
-        console.warn("ML inference failed, continuing without it", mlErr);
-      }
-
-      // Hard gate: if the on-device model is confident this is NOT a body region, stop.
-      if (mlPredictions?.bodyRegion.guess === "not_body") {
-        toast.error(
-          "Invalid image. Please upload a clear eye or skin image.",
-          { description: mlPredictions.bodyRegion.reason },
-        );
-        return;
-      }
-
-      // Sanity: strong yellow but region mismatch → reject
-      if (
-        colorFeatures.yellowRatio > 35 &&
-        mlPredictions &&
-        mlPredictions.bodyRegion.guess !== "eye_region" &&
-        mlPredictions.bodyRegion.guess !== "skin_region"
-      ) {
-        toast.error("Strong yellow detected outside a recognizable body region. Please retake.");
-        return;
-      }
-
-      // 3. Upload image to private storage
+      // 2. Upload image to private storage
       setStage("Uploading image securely…");
       const ext = file.name.split(".").pop() || "jpg";
       const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
@@ -234,18 +179,18 @@ function AnalyzePage() {
         .upload(path, file, { contentType: file.type });
       if (upErr) throw new Error(`Upload failed: ${upErr.message}`);
 
-      // 4. Convert to data URL for AI vision
-      setStage("Reconciling neural + vision signals…");
+      // 3. Convert to data URL for AI vision
+      setStage("Running AI vision analysis…");
       const imageBase64 = await fileToDataURL(file);
 
-      // 5. Call edge function with all 3 signals
+      // 4. Call edge function
       const { data: aiData, error: fnErr } = await supabase.functions.invoke("analyze-skin", {
-        body: { imageBase64, region, colorFeatures, ruleResult, mlPredictions },
+        body: { imageBase64, region, colorFeatures, ruleResult },
       });
       if (fnErr) throw new Error(fnErr.message);
       if (aiData?.error) throw new Error(aiData.error);
 
-      // 6. Persist
+      // 5. Persist
       setStage("Saving report…");
       const { data: inserted, error: insErr } = await supabase
         .from("reports")
@@ -262,8 +207,6 @@ function AnalyzePage() {
             trend: aiData.trend_note ? `${aiData.trend}: ${aiData.trend_note}` : aiData.trend,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             color_features: colorFeatures as any,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ml_predictions: mlPredictions as any,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ai_raw: aiData as any,
           },
@@ -284,42 +227,24 @@ function AnalyzePage() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-card p-5 shadow-glow md:p-7">
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,transparent_0,transparent_96%,color-mix(in_oklab,var(--primary)_12%,transparent)_100%)] bg-[length:26px_26px] opacity-40" />
-        <div className="relative flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase text-primary">
-              <ScanLine className="h-4 w-4" /> Neural screening console
-            </p>
-            <h1 className="mt-2 font-display text-3xl font-semibold md:text-5xl">
-              SkinScope AI analyzer
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
-              Tissue validation, image quality calibration, on-device ML, and vision AI fused into one controlled scan.
-            </p>
-          </div>
-          <div className="grid grid-cols-3 gap-2 text-center text-xs">
-            {[
-              { label: "Gate", value: "Body only", icon: ShieldCheck },
-              { label: "Model", value: "Local CNN", icon: BrainCircuit },
-              { label: "Fusion", value: "AI review", icon: Activity },
-            ].map((item) => (
-              <div key={item.label} className="rounded-lg border border-border bg-background/70 px-3 py-2 backdrop-blur">
-                <item.icon className="mx-auto mb-1 h-4 w-4 text-primary" />
-                <p className="font-semibold text-foreground">{item.value}</p>
-                <p className="text-muted-foreground">{item.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+    <div className="mx-auto max-w-5xl space-y-8">
+      <div>
+        <p className="text-sm font-medium text-primary">New analysis</p>
+        <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight md:text-4xl">
+          Upload an image to analyze
+        </h1>
+        <p className="mt-1.5 text-muted-foreground">
+          Choose the body region, upload a clear photo in good lighting, and get an AI-powered
+          wellness report.
+        </p>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
-        <section className="rounded-xl border border-border bg-card p-4 shadow-elegant md:p-5">
+      <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
+        {/* Upload card */}
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-elegant md:p-6">
           <div className="space-y-5">
             <div>
-              <Label className="text-sm font-medium">Target region</Label>
+              <Label className="text-sm font-medium">Region</Label>
               <div className="mt-2 grid grid-cols-3 gap-2">
                 {REGIONS.map((r) => {
                   const active = region === r.id;
@@ -330,22 +255,26 @@ function AnalyzePage() {
                       onClick={() => setRegion(r.id)}
                       disabled={analyzing}
                       className={cn(
-                        "group min-h-[104px] rounded-lg border p-3 text-center transition-all",
+                        "group flex flex-col items-center gap-2 rounded-xl border p-3 text-center transition-all",
                         active
-                          ? "border-primary bg-primary/10 shadow-glow ring-1 ring-primary/30"
-                          : "border-border bg-background/50 hover:border-primary/40 hover:bg-muted/50",
+                          ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/20"
+                          : "border-border hover:border-primary/40 hover:bg-muted/40",
                       )}
                     >
                       <div
                         className={cn(
-                          "mx-auto grid h-10 w-10 place-items-center rounded-md transition-colors",
-                          active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
+                          "grid h-10 w-10 place-items-center rounded-lg transition-colors",
+                          active
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground",
                         )}
                       >
                         <r.icon className="h-4 w-4" />
                       </div>
-                      <p className="mt-2 text-sm font-semibold">{r.label}</p>
-                      <p className="mt-0.5 text-[11px] leading-tight text-muted-foreground">{r.hint}</p>
+                      <div>
+                        <p className="text-sm font-medium">{r.label}</p>
+                        <p className="text-[11px] text-muted-foreground">{r.hint}</p>
+                      </div>
                     </button>
                   );
                 })}
@@ -353,16 +282,20 @@ function AnalyzePage() {
             </div>
 
             <div>
-              <div className="flex items-center justify-between gap-3">
-                <Label className="text-sm font-medium">Capture input</Label>
-                <div className="inline-flex rounded-lg border border-border bg-muted/50 p-0.5">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">Image</Label>
+                <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5">
                   <button
                     type="button"
-                    onClick={() => setMode("upload")}
+                    onClick={() => {
+                      setMode("upload");
+                    }}
                     disabled={analyzing}
                     className={cn(
                       "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                      mode === "upload" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                      mode === "upload"
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground",
                     )}
                   >
                     <Upload className="h-3.5 w-3.5" /> Upload
@@ -376,7 +309,9 @@ function AnalyzePage() {
                     disabled={analyzing}
                     className={cn(
                       "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                      mode === "camera" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                      mode === "camera"
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground",
                     )}
                   >
                     <Camera className="h-3.5 w-3.5" /> Camera
@@ -385,10 +320,12 @@ function AnalyzePage() {
               </div>
 
               {previewUrl ? (
-                <div className="relative mt-2 overflow-hidden rounded-xl border border-primary/20 bg-muted">
-                  <div className="pointer-events-none absolute inset-0 z-10 border border-primary/20" />
-                  <div className="pointer-events-none absolute inset-x-0 top-1/2 z-10 h-px bg-primary/50 shadow-glow" />
-                  <img src={previewUrl} alt="Capture preview" className="max-h-[390px] w-full object-contain" />
+                <div className="relative mt-2 overflow-hidden rounded-xl border border-border bg-muted">
+                  <img
+                    src={previewUrl}
+                    alt="Capture preview"
+                    className="max-h-[360px] w-full object-contain"
+                  />
                   <button
                     type="button"
                     onClick={() => {
@@ -396,7 +333,7 @@ function AnalyzePage() {
                       if (mode === "camera") startCamera();
                     }}
                     disabled={analyzing}
-                    className="absolute right-2 top-2 z-20 grid h-8 w-8 place-items-center rounded-full bg-background/90 text-foreground shadow-sm backdrop-blur transition-colors hover:bg-background"
+                    className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-background/90 text-foreground shadow-sm backdrop-blur transition-colors hover:bg-background"
                     aria-label="Remove image"
                   >
                     <X className="h-4 w-4" />
@@ -407,30 +344,31 @@ function AnalyzePage() {
                   type="button"
                   onClick={() => fileRef.current?.click()}
                   disabled={analyzing}
-                  className="mt-2 flex min-h-[310px] w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-primary/30 bg-muted/30 px-6 py-12 text-center transition-colors hover:border-primary/60 hover:bg-primary/5"
+                  className="mt-2 flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-muted/30 px-6 py-12 text-center transition-colors hover:border-primary/40 hover:bg-muted/50"
                 >
-                  <div className="grid h-14 w-14 place-items-center rounded-lg bg-primary/10 text-primary shadow-glow">
-                    <Upload className="h-7 w-7" />
-                  </div>
-                  <p className="font-semibold">Upload scan image</p>
+                  <Upload className="h-7 w-7 text-primary" />
+                  <p className="font-medium">Click to upload</p>
                   <p className="text-xs text-muted-foreground">PNG, JPG, or HEIC · Max 8 MB</p>
                 </button>
               ) : (
                 <div className="mt-2 space-y-3">
-                  <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-primary/20 bg-muted">
+                  <div className="relative overflow-hidden rounded-xl border border-border bg-black aspect-[4/3]">
                     <video
                       ref={videoRef}
                       playsInline
                       muted
                       autoPlay
-                      className={cn("h-full w-full object-cover", facingMode === "user" && "scale-x-[-1]", !cameraOn && "opacity-0")}
+                      className={cn(
+                        "h-full w-full object-cover",
+                        facingMode === "user" && "scale-x-[-1]",
+                        !cameraOn && "opacity-0",
+                      )}
                     />
-                    <div className="pointer-events-none absolute inset-4 rounded-lg border border-primary/30" />
                     {!cameraOn && (
                       <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center text-muted-foreground">
                         <Camera className="h-8 w-8 text-primary" />
-                        <p className="text-sm font-medium">Camera standby</p>
-                        <p className="px-6 text-xs">Allow browser access to capture a scan.</p>
+                        <p className="text-sm">Camera is off</p>
+                        <p className="px-6 text-xs">Tap "Start camera" and allow browser access.</p>
                       </div>
                     )}
                     {cameraOn && (
@@ -446,15 +384,40 @@ function AnalyzePage() {
                   </div>
                   <div className="flex gap-2">
                     {!cameraOn ? (
-                      <Button type="button" variant="outline" className="flex-1" onClick={() => startCamera()} disabled={cameraStarting || analyzing}>
-                        {cameraStarting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Starting…</> : <><Camera className="mr-2 h-4 w-4" /> Start camera</>}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => startCamera()}
+                        disabled={cameraStarting || analyzing}
+                      >
+                        {cameraStarting ? (
+                          <span className="inline-flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" /> Starting…
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-2">
+                            <Camera className="h-4 w-4" /> Start camera
+                          </span>
+                        )}
                       </Button>
                     ) : (
                       <>
-                        <Button type="button" className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90" onClick={capturePhoto} disabled={analyzing}>
+                        <Button
+                          type="button"
+                          className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
+                          onClick={capturePhoto}
+                          disabled={analyzing}
+                        >
                           <Camera className="mr-2 h-4 w-4" /> Capture photo
                         </Button>
-                        <Button type="button" variant="outline" onClick={stopCamera} disabled={analyzing} aria-label="Stop camera">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={stopCamera}
+                          disabled={analyzing}
+                          aria-label="Stop camera"
+                        >
                           <RefreshCw className="h-4 w-4" />
                         </Button>
                       </>
@@ -463,64 +426,82 @@ function AnalyzePage() {
                 </div>
               )}
 
-              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleFileSelect(e.target.files?.[0] ?? null)} />
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => handleFileSelect(e.target.files?.[0] ?? null)}
+              />
             </div>
 
-            <Button onClick={runAnalysis} disabled={!file || analyzing} size="lg" className="h-12 w-full bg-gradient-hero text-primary-foreground shadow-glow hover:opacity-95">
+            <Button
+              onClick={runAnalysis}
+              disabled={!file || analyzing}
+              size="lg"
+              className="w-full bg-gradient-hero text-primary-foreground shadow-elegant hover:opacity-95"
+            >
               {analyzing ? (
                 <span className="inline-flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" /> {stage || "Analyzing…"}
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {stage || "Analyzing…"}
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-2">
-                  Run controlled scan <ArrowRight className="h-4 w-4" />
+                  Run analysis <ArrowRight className="h-4 w-4" />
                 </span>
               )}
             </Button>
           </div>
-        </section>
+        </div>
 
-        <aside className="space-y-4">
-          <div className="rounded-xl border border-border bg-card p-5 shadow-elegant">
-            <h3 className="font-display text-lg font-semibold">Signal stack</h3>
-            <div className="mt-4 space-y-3">
-              {[
-                ["Image quality", "Adaptive focus + lighting gate"],
-                ["Tissue detector", "Skin/eye mask before prediction"],
-                ["Neural model", "Local CNN probability signal"],
-                ["Final fusion", "Closed-set safe output"],
-              ].map(([title, detail]) => (
-                <div key={title} className="rounded-lg border border-border bg-muted/30 p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold">{title}</p>
-                    <span className="h-2 w-2 rounded-full bg-primary shadow-glow" />
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">{detail}</p>
-                </div>
-              ))}
-            </div>
+        {/* Info side */}
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-border bg-gradient-card p-5 shadow-elegant md:p-6">
+            <h3 className="font-display text-lg font-semibold">How it works</h3>
+            <ol className="mt-3 space-y-3 text-sm text-muted-foreground">
+              <li className="flex gap-3">
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                  1
+                </span>
+                <span>We extract RGB & HSV features from your image right in your browser.</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                  2
+                </span>
+                <span>A vision model reviews the image with region-specific thresholds.</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                  3
+                </span>
+                <span>Your past reports inform the trend (improving · stable · worsening).</span>
+              </li>
+            </ol>
           </div>
 
-          <div className="flex gap-3 rounded-xl border border-warning/30 bg-warning/10 p-4 text-sm">
+          <div className="flex gap-3 rounded-2xl border border-warning/30 bg-warning/10 p-4 text-sm">
             <AlertTriangle className="h-5 w-5 shrink-0 text-warning-foreground" />
             <div>
-              <p className="font-medium text-foreground">Screening tool only</p>
+              <p className="font-medium text-foreground">Educational use only</p>
               <p className="mt-1 text-muted-foreground">
-                SkinScope AI does not diagnose medical conditions. Consult a healthcare professional for concerning findings.
+                SkinScope AI does not diagnose medical conditions. Always consult a healthcare
+                professional for any concerning findings.
               </p>
             </div>
           </div>
 
-          <div className="rounded-xl border border-border bg-gradient-card p-5 shadow-sm">
-            <h3 className="font-display text-base font-semibold">Best scan setup</h3>
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+            <h3 className="font-display text-base font-semibold">Tips for best results</h3>
             <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
-              <li>• Natural daylight, no yellow lamp</li>
-              <li>• Body region fills most of frame</li>
-              <li>• Neutral background</li>
-              <li>• Clean lens, steady hand</li>
+              <li>• Use natural daylight, avoid yellow lamps</li>
+              <li>• Keep the camera 15–25 cm from the area</li>
+              <li>• Make sure the area fills most of the frame</li>
+              <li>• Clean lens, steady hand, neutral background</li>
             </ul>
           </div>
-        </aside>
+        </div>
       </div>
     </div>
   );

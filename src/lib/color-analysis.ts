@@ -2,8 +2,6 @@
 // Mirrors the OpenCV RGB/HSV approach from the original spec.
 
 export interface ColorFeatures {
-  width: number;
-  height: number;
   avgR: number;
   avgG: number;
   avgB: number;
@@ -14,15 +12,6 @@ export interface ColorFeatures {
   redRatio: number; // % pixels in red hue range
   darkRatio: number; // % low-value pixels
   brightness: number; // 0-100
-  blurScore: number;
-  luminanceStd: number;
-  colorCastScore: number;
-  skinPixelRatio: number;
-  eyeWhiteRatio: number;
-  tooDark: boolean;
-  tooBright: boolean;
-  blurry: boolean;
-  extremeColorCast: boolean;
 }
 
 function rgbToHsv(r: number, g: number, b: number): [number, number, number] {
@@ -88,18 +77,10 @@ function analyzeImageElement(img: HTMLImageElement): ColorFeatures {
     sumV = 0;
   let yellow = 0,
     red = 0,
-    dark = 0,
-    skinPixels = 0,
-    eyeWhitePixels = 0;
+    dark = 0;
   let count = 0;
-  let sumLum = 0;
-  let edgeEnergy = 0;
-  let edgeCount = 0;
-
-  const luminance = new Float32Array(w * h);
 
   for (let i = 0; i < data.length; i += 4) {
-    const pixelIndex = i / 4;
     const r = data[i],
       g = data[i + 1],
       b = data[i + 2];
@@ -116,75 +97,20 @@ function analyzeImageElement(img: HTMLImageElement): ColorFeatures {
     // Red hue: wraps near 0/360
     if ((hh <= 15 || hh >= 345) && ss >= 30 && vv >= 25) red++;
     if (vv < 20) dark++;
-    const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-    luminance[pixelIndex] = lum;
-    sumLum += lum;
-
-    // Broad tissue masks: intentionally permissive to avoid rejecting valid close-ups.
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    const skinHue = (hh <= 55 || hh >= 330) && ss >= 8 && ss <= 82 && vv >= 18 && vv <= 98;
-    const rgbSkin = r > 45 && g > 28 && b > 18 && r >= g - 18 && r > b + 4 && max - min > 8;
-    if (skinHue && rgbSkin) skinPixels++;
-    if (ss <= 24 && vv >= 48 && max - min <= 44 && Math.abs(r - g) <= 34) eyeWhitePixels++;
     count++;
   }
 
-  for (let y = 0; y < h - 1; y++) {
-    for (let x = 0; x < w - 1; x++) {
-      const idx = y * w + x;
-      const dx = Math.abs(luminance[idx] - luminance[idx + 1]);
-      const dy = Math.abs(luminance[idx] - luminance[idx + w]);
-      edgeEnergy += dx + dy;
-      edgeCount += 2;
-    }
-  }
-
-  const avgR = +(sumR / count).toFixed(2);
-  const avgG = +(sumG / count).toFixed(2);
-  const avgB = +(sumB / count).toFixed(2);
-  const brightness = +(sumV / count).toFixed(2);
-  const blurScore = +(edgeEnergy / Math.max(1, edgeCount)).toFixed(2);
-  const meanLum = sumLum / count;
-  let lumVariance = 0;
-  for (let i = 0; i < luminance.length; i++) {
-    const d = luminance[i] - meanLum;
-    lumVariance += d * d;
-  }
-  const luminanceStd = +Math.sqrt(lumVariance / Math.max(1, luminance.length)).toFixed(2);
-  const channelMean = (avgR + avgG + avgB) / 3;
-  const colorCastScore = +(
-    (Math.abs(avgR - channelMean) + Math.abs(avgG - channelMean) + Math.abs(avgB - channelMean)) /
-    3
-  ).toFixed(2);
-  const tooDark = brightness < 22 || (dark / count) * 100 > 55;
-  const tooBright = brightness > 92;
-  // Close-up skin/eye images naturally have low texture, so only flag catastrophic focus loss.
-  const blurry = blurScore < 4.2 && luminanceStd < 13;
-  const extremeColorCast = colorCastScore > 48 && (skinPixels / count) * 100 < 8;
-
   return {
-    width: img.naturalWidth || img.width,
-    height: img.naturalHeight || img.height,
-    avgR,
-    avgG,
-    avgB,
+    avgR: +(sumR / count).toFixed(2),
+    avgG: +(sumG / count).toFixed(2),
+    avgB: +(sumB / count).toFixed(2),
     avgH: +(sumH / count).toFixed(2),
     avgS: +(sumS / count).toFixed(2),
     avgV: +(sumV / count).toFixed(2),
     yellowRatio: +((yellow / count) * 100).toFixed(2),
     redRatio: +((red / count) * 100).toFixed(2),
     darkRatio: +((dark / count) * 100).toFixed(2),
-    brightness,
-    blurScore,
-    luminanceStd,
-    colorCastScore,
-    skinPixelRatio: +((skinPixels / count) * 100).toFixed(2),
-    eyeWhiteRatio: +((eyeWhitePixels / count) * 100).toFixed(2),
-    tooDark,
-    tooBright,
-    blurry,
-    extremeColorCast,
+    brightness: +(sumV / count).toFixed(2),
   };
 }
 
@@ -209,26 +135,34 @@ export function applyRegionRules(region: "eye" | "skin" | "palm", f: ColorFeatur
   const y = f.yellowRatio;
   const r = f.redRatio;
 
-  let condition = "normal";
+  let condition = "Healthy appearance";
   let severity: RuleResult["severity"] = "none";
   let ruleConfidence = 60;
 
   if (y >= yellowThresh.severe) {
-    condition = "jaundice_possible";
+    condition = "Possible jaundice (severe)";
     severity = "severe";
     ruleConfidence = 88;
   } else if (y >= yellowThresh.moderate) {
-    condition = "jaundice_possible";
+    condition = "Possible jaundice (moderate)";
     severity = "moderate";
     ruleConfidence = 78;
   } else if (y >= yellowThresh.mild) {
-    condition = "jaundice_possible";
+    condition = "Possible jaundice (mild)";
     severity = "mild";
     ruleConfidence = 68;
-  } else if (r >= redThresh.severe || r >= redThresh.moderate || r >= redThresh.mild) {
-    condition = "unclear";
-    severity = r >= redThresh.severe ? "severe" : r >= redThresh.moderate ? "moderate" : "mild";
-    ruleConfidence = r >= redThresh.severe ? 70 : r >= redThresh.moderate ? 62 : 55;
+  } else if (r >= redThresh.severe && f.darkRatio < 15) {
+    condition = "Possible burn or severe inflammation";
+    severity = "severe";
+    ruleConfidence = 82;
+  } else if (r >= redThresh.moderate) {
+    condition = "Possible burn or inflammation";
+    severity = "moderate";
+    ruleConfidence = 74;
+  } else if (r >= redThresh.mild) {
+    condition = "Mild redness or irritation";
+    severity = "mild";
+    ruleConfidence = 65;
   }
 
   return { condition, severity, ruleConfidence };
