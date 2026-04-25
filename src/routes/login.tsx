@@ -135,6 +135,14 @@ function LoginPage() {
             </button>
           </div>
         </div>
+        <div className="mt-8 flex items-center justify-center gap-3">
+          <span className="h-px w-10 bg-gradient-to-r from-transparent to-border" />
+          <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">crafted by</span>
+          <span className="h-px w-10 bg-gradient-to-l from-transparent to-border" />
+        </div>
+        <p className="mt-2 text-center font-display text-2xl italic tracking-wide bg-gradient-hero bg-clip-text text-transparent drop-shadow-sm">
+          Steven
+        </p>
       </div>
     </div>
   );
