@@ -14,6 +14,9 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as DashboardRemindersRouteImport } from './routes/dashboard.reminders'
+import { Route as DashboardInsightsRouteImport } from './routes/dashboard.insights'
+import { Route as DashboardDiaryRouteImport } from './routes/dashboard.diary'
 import { Route as DashboardAnalyzeRouteImport } from './routes/dashboard.analyze'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as DashboardReportsIndexRouteImport } from './routes/dashboard.reports.index'
@@ -42,6 +45,21 @@ const IndexRoute = IndexRouteImport.update({
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardRemindersRoute = DashboardRemindersRouteImport.update({
+  id: '/reminders',
+  path: '/reminders',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardInsightsRoute = DashboardInsightsRouteImport.update({
+  id: '/insights',
+  path: '/insights',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardDiaryRoute = DashboardDiaryRouteImport.update({
+  id: '/diary',
+  path: '/diary',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardAnalyzeRoute = DashboardAnalyzeRouteImport.update({
@@ -73,6 +91,9 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/dashboard/analyze': typeof DashboardAnalyzeRoute
+  '/dashboard/diary': typeof DashboardDiaryRoute
+  '/dashboard/insights': typeof DashboardInsightsRoute
+  '/dashboard/reminders': typeof DashboardRemindersRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/reports/$reportId': typeof DashboardReportsReportIdRoute
   '/dashboard/reports/': typeof DashboardReportsIndexRoute
@@ -83,6 +104,9 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/dashboard/analyze': typeof DashboardAnalyzeRoute
+  '/dashboard/diary': typeof DashboardDiaryRoute
+  '/dashboard/insights': typeof DashboardInsightsRoute
+  '/dashboard/reminders': typeof DashboardRemindersRoute
   '/dashboard': typeof DashboardIndexRoute
   '/dashboard/reports/$reportId': typeof DashboardReportsReportIdRoute
   '/dashboard/reports': typeof DashboardReportsIndexRoute
@@ -95,6 +119,9 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/dashboard/analyze': typeof DashboardAnalyzeRoute
+  '/dashboard/diary': typeof DashboardDiaryRoute
+  '/dashboard/insights': typeof DashboardInsightsRoute
+  '/dashboard/reminders': typeof DashboardRemindersRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/reports/$reportId': typeof DashboardReportsReportIdRoute
   '/dashboard/reports/': typeof DashboardReportsIndexRoute
@@ -108,6 +135,9 @@ export interface FileRouteTypes {
     | '/signup'
     | '/auth/callback'
     | '/dashboard/analyze'
+    | '/dashboard/diary'
+    | '/dashboard/insights'
+    | '/dashboard/reminders'
     | '/dashboard/'
     | '/dashboard/reports/$reportId'
     | '/dashboard/reports/'
@@ -118,6 +148,9 @@ export interface FileRouteTypes {
     | '/signup'
     | '/auth/callback'
     | '/dashboard/analyze'
+    | '/dashboard/diary'
+    | '/dashboard/insights'
+    | '/dashboard/reminders'
     | '/dashboard'
     | '/dashboard/reports/$reportId'
     | '/dashboard/reports'
@@ -129,6 +162,9 @@ export interface FileRouteTypes {
     | '/signup'
     | '/auth/callback'
     | '/dashboard/analyze'
+    | '/dashboard/diary'
+    | '/dashboard/insights'
+    | '/dashboard/reminders'
     | '/dashboard/'
     | '/dashboard/reports/$reportId'
     | '/dashboard/reports/'
@@ -179,6 +215,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/reminders': {
+      id: '/dashboard/reminders'
+      path: '/reminders'
+      fullPath: '/dashboard/reminders'
+      preLoaderRoute: typeof DashboardRemindersRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/insights': {
+      id: '/dashboard/insights'
+      path: '/insights'
+      fullPath: '/dashboard/insights'
+      preLoaderRoute: typeof DashboardInsightsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/diary': {
+      id: '/dashboard/diary'
+      path: '/diary'
+      fullPath: '/dashboard/diary'
+      preLoaderRoute: typeof DashboardDiaryRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/analyze': {
       id: '/dashboard/analyze'
       path: '/analyze'
@@ -212,6 +269,9 @@ declare module '@tanstack/react-router' {
 
 interface DashboardRouteChildren {
   DashboardAnalyzeRoute: typeof DashboardAnalyzeRoute
+  DashboardDiaryRoute: typeof DashboardDiaryRoute
+  DashboardInsightsRoute: typeof DashboardInsightsRoute
+  DashboardRemindersRoute: typeof DashboardRemindersRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
   DashboardReportsReportIdRoute: typeof DashboardReportsReportIdRoute
   DashboardReportsIndexRoute: typeof DashboardReportsIndexRoute
@@ -219,6 +279,9 @@ interface DashboardRouteChildren {
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardAnalyzeRoute: DashboardAnalyzeRoute,
+  DashboardDiaryRoute: DashboardDiaryRoute,
+  DashboardInsightsRoute: DashboardInsightsRoute,
+  DashboardRemindersRoute: DashboardRemindersRoute,
   DashboardIndexRoute: DashboardIndexRoute,
   DashboardReportsReportIdRoute: DashboardReportsReportIdRoute,
   DashboardReportsIndexRoute: DashboardReportsIndexRoute,
@@ -238,3 +301,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
