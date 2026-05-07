@@ -281,3 +281,28 @@ function EmptyChart() {
 function capitalize(s: string) {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
 }
+
+function QuickCard({
+  icon: Icon,
+  title,
+  description,
+  to,
+}: {
+  icon: typeof Activity;
+  title: string;
+  description: string;
+  to: string;
+}) {
+  return (
+    <Link
+      to={to}
+      className="group rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:border-primary/30 hover:shadow-elegant"
+    >
+      <div className="mb-3 grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+        <Icon className="h-4.5 w-4.5" />
+      </div>
+      <h3 className="font-display text-sm font-semibold">{title}</h3>
+      <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+    </Link>
+  );
+}
