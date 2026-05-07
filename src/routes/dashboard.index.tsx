@@ -111,7 +111,28 @@ function DashboardOverview() {
         />
       </div>
 
-      {/* Trend chart */}
+      {/* Quick access cards */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <QuickCard
+          icon={BookOpen}
+          title="Symptom Diary"
+          description="Log daily symptoms, products & triggers"
+          to="/dashboard/diary"
+        />
+        <QuickCard
+          icon={Bell}
+          title="Reminders"
+          description="Schedule follow-up scan reminders"
+          to="/dashboard/reminders"
+        />
+        <QuickCard
+          icon={BarChart3}
+          title="Insights"
+          description="Spot patterns from your diary data"
+          to="/dashboard/insights"
+        />
+      </div>
+
       <div className="rounded-2xl border border-border bg-card p-5 shadow-elegant md:p-6">
         <div className="flex items-center justify-between">
           <div>
