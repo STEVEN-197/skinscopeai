@@ -10,7 +10,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { format } from "date-fns";
-import { Activity, FileText, TrendingUp, Upload, ArrowRight, Sparkles } from "lucide-react";
+import { Activity, FileText, TrendingUp, Upload, ArrowRight, Sparkles, BookOpen, Bell, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -111,7 +111,28 @@ function DashboardOverview() {
         />
       </div>
 
-      {/* Trend chart */}
+      {/* Quick access cards */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <QuickCard
+          icon={BookOpen}
+          title="Symptom Diary"
+          description="Log daily symptoms, products & triggers"
+          to="/dashboard/diary"
+        />
+        <QuickCard
+          icon={Bell}
+          title="Reminders"
+          description="Schedule follow-up scan reminders"
+          to="/dashboard/reminders"
+        />
+        <QuickCard
+          icon={BarChart3}
+          title="Insights"
+          description="Spot patterns from your diary data"
+          to="/dashboard/insights"
+        />
+      </div>
+
       <div className="rounded-2xl border border-border bg-card p-5 shadow-elegant md:p-6">
         <div className="flex items-center justify-between">
           <div>
@@ -259,4 +280,29 @@ function EmptyChart() {
 
 function capitalize(s: string) {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
+}
+
+function QuickCard({
+  icon: Icon,
+  title,
+  description,
+  to,
+}: {
+  icon: typeof Activity;
+  title: string;
+  description: string;
+  to: string;
+}) {
+  return (
+    <Link
+      to={to}
+      className="group rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:border-primary/30 hover:shadow-elegant"
+    >
+      <div className="mb-3 grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+        <Icon className="h-4.5 w-4.5" />
+      </div>
+      <h3 className="font-display text-sm font-semibold">{title}</h3>
+      <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+    </Link>
+  );
 }

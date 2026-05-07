@@ -41,6 +41,39 @@ export type Database = {
         }
         Relationships: []
       }
+      reminders: {
+        Row: {
+          created_at: string
+          due_date: string
+          id: string
+          label: string
+          report_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          due_date: string
+          id?: string
+          label?: string
+          report_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          due_date?: string
+          id?: string
+          label?: string
+          report_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       reports: {
         Row: {
           ai_raw: Json | null
@@ -88,6 +121,57 @@ export type Database = {
           region?: string
           severity?: string
           trend?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      symptom_diary: {
+        Row: {
+          created_at: string
+          dryness: number
+          entry_date: string
+          id: string
+          irritation: number
+          itch: number
+          notes: string | null
+          pain: number
+          products_used: string[] | null
+          redness: number
+          swelling: number
+          triggers: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dryness?: number
+          entry_date?: string
+          id?: string
+          irritation?: number
+          itch?: number
+          notes?: string | null
+          pain?: number
+          products_used?: string[] | null
+          redness?: number
+          swelling?: number
+          triggers?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dryness?: number
+          entry_date?: string
+          id?: string
+          irritation?: number
+          itch?: number
+          notes?: string | null
+          pain?: number
+          products_used?: string[] | null
+          redness?: number
+          swelling?: number
+          triggers?: string[] | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

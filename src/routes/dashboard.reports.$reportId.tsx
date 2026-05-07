@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { SeverityBadge } from "@/components/SeverityBadge";
+import { CareRoutine } from "@/components/CareRoutine";
 
 export const Route = createFileRoute("/dashboard/reports/$reportId")({
   head: () => ({ meta: [{ title: "Report — SkinScope AI" }] }),
@@ -266,6 +267,14 @@ function ReportDetail() {
           />
         </div>
       </div>
+
+      {/* Suggested Care Routine */}
+      <CareRoutine
+        severity={report.severity}
+        condition={report.condition}
+        region={report.region}
+        trend={report.trend}
+      />
 
       {cf && (
         <div className="rounded-2xl border border-border bg-card p-5 shadow-elegant md:p-6">
