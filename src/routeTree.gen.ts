@@ -17,6 +17,7 @@ import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as DashboardTimelineRouteImport } from './routes/dashboard.timeline'
 import { Route as DashboardRemindersRouteImport } from './routes/dashboard.reminders'
 import { Route as DashboardMedicalReportsRouteImport } from './routes/dashboard.medical-reports'
+import { Route as DashboardIntelligenceRouteImport } from './routes/dashboard.intelligence'
 import { Route as DashboardInsightsRouteImport } from './routes/dashboard.insights'
 import { Route as DashboardDiaryRouteImport } from './routes/dashboard.diary'
 import { Route as DashboardAnalyzeRouteImport } from './routes/dashboard.analyze'
@@ -64,6 +65,11 @@ const DashboardMedicalReportsRoute = DashboardMedicalReportsRouteImport.update({
   path: '/medical-reports',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardIntelligenceRoute = DashboardIntelligenceRouteImport.update({
+  id: '/intelligence',
+  path: '/intelligence',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardInsightsRoute = DashboardInsightsRouteImport.update({
   id: '/insights',
   path: '/insights',
@@ -105,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/analyze': typeof DashboardAnalyzeRoute
   '/dashboard/diary': typeof DashboardDiaryRoute
   '/dashboard/insights': typeof DashboardInsightsRoute
+  '/dashboard/intelligence': typeof DashboardIntelligenceRoute
   '/dashboard/medical-reports': typeof DashboardMedicalReportsRoute
   '/dashboard/reminders': typeof DashboardRemindersRoute
   '/dashboard/timeline': typeof DashboardTimelineRoute
@@ -120,6 +127,7 @@ export interface FileRoutesByTo {
   '/dashboard/analyze': typeof DashboardAnalyzeRoute
   '/dashboard/diary': typeof DashboardDiaryRoute
   '/dashboard/insights': typeof DashboardInsightsRoute
+  '/dashboard/intelligence': typeof DashboardIntelligenceRoute
   '/dashboard/medical-reports': typeof DashboardMedicalReportsRoute
   '/dashboard/reminders': typeof DashboardRemindersRoute
   '/dashboard/timeline': typeof DashboardTimelineRoute
@@ -137,6 +145,7 @@ export interface FileRoutesById {
   '/dashboard/analyze': typeof DashboardAnalyzeRoute
   '/dashboard/diary': typeof DashboardDiaryRoute
   '/dashboard/insights': typeof DashboardInsightsRoute
+  '/dashboard/intelligence': typeof DashboardIntelligenceRoute
   '/dashboard/medical-reports': typeof DashboardMedicalReportsRoute
   '/dashboard/reminders': typeof DashboardRemindersRoute
   '/dashboard/timeline': typeof DashboardTimelineRoute
@@ -155,6 +164,7 @@ export interface FileRouteTypes {
     | '/dashboard/analyze'
     | '/dashboard/diary'
     | '/dashboard/insights'
+    | '/dashboard/intelligence'
     | '/dashboard/medical-reports'
     | '/dashboard/reminders'
     | '/dashboard/timeline'
@@ -170,6 +180,7 @@ export interface FileRouteTypes {
     | '/dashboard/analyze'
     | '/dashboard/diary'
     | '/dashboard/insights'
+    | '/dashboard/intelligence'
     | '/dashboard/medical-reports'
     | '/dashboard/reminders'
     | '/dashboard/timeline'
@@ -186,6 +197,7 @@ export interface FileRouteTypes {
     | '/dashboard/analyze'
     | '/dashboard/diary'
     | '/dashboard/insights'
+    | '/dashboard/intelligence'
     | '/dashboard/medical-reports'
     | '/dashboard/reminders'
     | '/dashboard/timeline'
@@ -260,6 +272,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardMedicalReportsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/intelligence': {
+      id: '/dashboard/intelligence'
+      path: '/intelligence'
+      fullPath: '/dashboard/intelligence'
+      preLoaderRoute: typeof DashboardIntelligenceRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/insights': {
       id: '/dashboard/insights'
       path: '/insights'
@@ -309,6 +328,7 @@ interface DashboardRouteChildren {
   DashboardAnalyzeRoute: typeof DashboardAnalyzeRoute
   DashboardDiaryRoute: typeof DashboardDiaryRoute
   DashboardInsightsRoute: typeof DashboardInsightsRoute
+  DashboardIntelligenceRoute: typeof DashboardIntelligenceRoute
   DashboardMedicalReportsRoute: typeof DashboardMedicalReportsRoute
   DashboardRemindersRoute: typeof DashboardRemindersRoute
   DashboardTimelineRoute: typeof DashboardTimelineRoute
@@ -321,6 +341,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardAnalyzeRoute: DashboardAnalyzeRoute,
   DashboardDiaryRoute: DashboardDiaryRoute,
   DashboardInsightsRoute: DashboardInsightsRoute,
+  DashboardIntelligenceRoute: DashboardIntelligenceRoute,
   DashboardMedicalReportsRoute: DashboardMedicalReportsRoute,
   DashboardRemindersRoute: DashboardRemindersRoute,
   DashboardTimelineRoute: DashboardTimelineRoute,
