@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, Navigate, Outlet, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Upload, FileText, LogOut, Menu, X, BookOpen, Bell, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Upload, FileText, LogOut, Menu, X, BookOpen, Bell, BarChart3, Activity, FlaskConical, Sparkles } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
