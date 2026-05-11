@@ -9,10 +9,13 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { to: "/dashboard/analyze", label: "New Analysis", icon: Upload },
-  { to: "/dashboard/reports", label: "Reports", icon: FileText },
+  { to: "/dashboard/reports", label: "Scan Reports", icon: FileText },
+  { to: "/dashboard/medical-reports", label: "Medical Reports", icon: FlaskConical },
+  { to: "/dashboard/timeline", label: "Health Timeline", icon: Activity },
+  { to: "/dashboard/intelligence", label: "AI Intelligence", icon: Sparkles },
   { to: "/dashboard/diary", label: "Symptom Diary", icon: BookOpen },
   { to: "/dashboard/reminders", label: "Reminders", icon: Bell },
-  { to: "/dashboard/insights", label: "Insights", icon: BarChart3 },
+  { to: "/dashboard/insights", label: "Trend Insights", icon: BarChart3 },
 ];
 
 export function DashboardLayout({ children }: { children?: ReactNode }) {
