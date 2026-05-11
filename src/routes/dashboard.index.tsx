@@ -10,7 +10,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { format } from "date-fns";
-import { Activity, FileText, TrendingUp, Upload, ArrowRight, Sparkles, BookOpen, Bell, BarChart3 } from "lucide-react";
+import { Activity, FileText, TrendingUp, Upload, ArrowRight, Sparkles, BookOpen, Bell, BarChart3, FlaskConical } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -112,7 +112,25 @@ function DashboardOverview() {
       </div>
 
       {/* Quick access cards */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <QuickCard
+          icon={Sparkles}
+          title="AI Health Intelligence"
+          description="Predictive multi-modal observations"
+          to="/dashboard/intelligence"
+        />
+        <QuickCard
+          icon={Activity}
+          title="Health Timeline"
+          description="Unified longitudinal view of your health"
+          to="/dashboard/timeline"
+        />
+        <QuickCard
+          icon={FlaskConical}
+          title="Medical Reports"
+          description="Upload labs · OCR & trend comparison"
+          to="/dashboard/medical-reports"
+        />
         <QuickCard
           icon={BookOpen}
           title="Symptom Diary"
@@ -127,7 +145,7 @@ function DashboardOverview() {
         />
         <QuickCard
           icon={BarChart3}
-          title="Insights"
+          title="Trend Insights"
           description="Spot patterns from your diary data"
           to="/dashboard/insights"
         />

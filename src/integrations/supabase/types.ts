@@ -14,6 +14,96 @@ export type Database = {
   }
   public: {
     Tables: {
+      health_insights: {
+        Row: {
+          created_at: string
+          generated_at: string
+          id: string
+          inputs_snapshot: Json | null
+          observations: Json | null
+          recommendations: Json | null
+          summary: string
+          trends: Json | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          generated_at?: string
+          id?: string
+          inputs_snapshot?: Json | null
+          observations?: Json | null
+          recommendations?: Json | null
+          summary: string
+          trends?: Json | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          generated_at?: string
+          id?: string
+          inputs_snapshot?: Json | null
+          observations?: Json | null
+          recommendations?: Json | null
+          summary?: string
+          trends?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      medical_reports: {
+        Row: {
+          abnormalities: Json | null
+          ai_analysis: Json | null
+          created_at: string
+          extracted_values: Json | null
+          file_name: string | null
+          file_path: string | null
+          id: string
+          mime_type: string | null
+          raw_text: string | null
+          report_date: string | null
+          report_type: string | null
+          source_type: string
+          summary: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          abnormalities?: Json | null
+          ai_analysis?: Json | null
+          created_at?: string
+          extracted_values?: Json | null
+          file_name?: string | null
+          file_path?: string | null
+          id?: string
+          mime_type?: string | null
+          raw_text?: string | null
+          report_date?: string | null
+          report_type?: string | null
+          source_type?: string
+          summary?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          abnormalities?: Json | null
+          ai_analysis?: Json | null
+          created_at?: string
+          extracted_values?: Json | null
+          file_name?: string | null
+          file_path?: string | null
+          id?: string
+          mime_type?: string | null
+          raw_text?: string | null
+          report_date?: string | null
+          report_type?: string | null
+          source_type?: string
+          summary?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
