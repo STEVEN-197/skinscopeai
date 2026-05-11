@@ -10,7 +10,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { format } from "date-fns";
-import { Activity, FileText, TrendingUp, Upload, ArrowRight, Sparkles, BookOpen, Bell, BarChart3 } from "lucide-react";
+import { Activity, FileText, TrendingUp, Upload, ArrowRight, Sparkles, BookOpen, Bell, BarChart3, FlaskConical } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
