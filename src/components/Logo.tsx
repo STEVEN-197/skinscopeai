@@ -23,9 +23,9 @@ export function Logo({ className }: { className?: string }) {
         </div>
       </div>
       <div className="flex flex-col leading-none">
-        <span className="font-display text-lg font-semibold tracking-tight">SkinScope</span>
+        <span className="font-display text-lg font-semibold tracking-tight">SkinScope AI</span>
         <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          AI
+          Health Intelligence
         </span>
       </div>
     </div>

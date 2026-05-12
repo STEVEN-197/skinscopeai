@@ -14,6 +14,154 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          clinic: string | null
+          created_at: string
+          doctor_name: string | null
+          family_member_id: string | null
+          id: string
+          notes: string | null
+          reason: string | null
+          scheduled_at: string
+          specialist_type: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          clinic?: string | null
+          created_at?: string
+          doctor_name?: string | null
+          family_member_id?: string | null
+          id?: string
+          notes?: string | null
+          reason?: string | null
+          scheduled_at: string
+          specialist_type: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          clinic?: string | null
+          created_at?: string
+          doctor_name?: string | null
+          family_member_id?: string | null
+          id?: string
+          notes?: string | null
+          reason?: string | null
+          scheduled_at?: string
+          specialist_type?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_family_member_id_fkey"
+            columns: ["family_member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      family_members: {
+        Row: {
+          avatar_color: string | null
+          created_at: string
+          date_of_birth: string | null
+          id: string
+          name: string
+          notes: string | null
+          relation: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_color?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          relation?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_color?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          relation?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       health_insights: {
         Row: {
           created_at: string
@@ -50,12 +198,55 @@ export type Database = {
         }
         Relationships: []
       }
+      lifestyle_logs: {
+        Row: {
+          created_at: string
+          diet_quality: number | null
+          exercise_minutes: number | null
+          id: string
+          log_date: string
+          notes: string | null
+          sleep_hours: number | null
+          stress_level: number | null
+          updated_at: string
+          user_id: string
+          water_glasses: number | null
+        }
+        Insert: {
+          created_at?: string
+          diet_quality?: number | null
+          exercise_minutes?: number | null
+          id?: string
+          log_date?: string
+          notes?: string | null
+          sleep_hours?: number | null
+          stress_level?: number | null
+          updated_at?: string
+          user_id: string
+          water_glasses?: number | null
+        }
+        Update: {
+          created_at?: string
+          diet_quality?: number | null
+          exercise_minutes?: number | null
+          id?: string
+          log_date?: string
+          notes?: string | null
+          sleep_hours?: number | null
+          stress_level?: number | null
+          updated_at?: string
+          user_id?: string
+          water_glasses?: number | null
+        }
+        Relationships: []
+      }
       medical_reports: {
         Row: {
           abnormalities: Json | null
           ai_analysis: Json | null
           created_at: string
           extracted_values: Json | null
+          family_member_id: string | null
           file_name: string | null
           file_path: string | null
           id: string
@@ -73,6 +264,7 @@ export type Database = {
           ai_analysis?: Json | null
           created_at?: string
           extracted_values?: Json | null
+          family_member_id?: string | null
           file_name?: string | null
           file_path?: string | null
           id?: string
@@ -90,6 +282,7 @@ export type Database = {
           ai_analysis?: Json | null
           created_at?: string
           extracted_values?: Json | null
+          family_member_id?: string | null
           file_name?: string | null
           file_path?: string | null
           id?: string
@@ -102,7 +295,71 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "medical_reports_family_member_id_fkey"
+            columns: ["family_member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prescriptions: {
+        Row: {
+          ai_explanation: string | null
+          created_at: string
+          doctor_name: string | null
+          family_member_id: string | null
+          file_name: string | null
+          file_path: string | null
+          id: string
+          medicines: Json | null
+          mime_type: string | null
+          prescribed_date: string | null
+          raw_text: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_explanation?: string | null
+          created_at?: string
+          doctor_name?: string | null
+          family_member_id?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          id?: string
+          medicines?: Json | null
+          mime_type?: string | null
+          prescribed_date?: string | null
+          raw_text?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_explanation?: string | null
+          created_at?: string
+          doctor_name?: string | null
+          family_member_id?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          id?: string
+          medicines?: Json | null
+          mime_type?: string | null
+          prescribed_date?: string | null
+          raw_text?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prescriptions_family_member_id_fkey"
+            columns: ["family_member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -171,6 +428,7 @@ export type Database = {
           condition: string
           confidence: number
           created_at: string
+          family_member_id: string | null
           id: string
           image_path: string
           ml_predictions: Json | null
@@ -187,6 +445,7 @@ export type Database = {
           condition: string
           confidence?: number
           created_at?: string
+          family_member_id?: string | null
           id?: string
           image_path: string
           ml_predictions?: Json | null
@@ -203,6 +462,7 @@ export type Database = {
           condition?: string
           confidence?: number
           created_at?: string
+          family_member_id?: string | null
           id?: string
           image_path?: string
           ml_predictions?: Json | null
@@ -213,7 +473,15 @@ export type Database = {
           trend?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "reports_family_member_id_fkey"
+            columns: ["family_member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       symptom_diary: {
         Row: {
