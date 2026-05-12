@@ -165,12 +165,25 @@ function AnalyzePage() {
     if (!file || !user || !session) return;
     setAnalyzing(true);
     try {
-      // 1. Color analysis (client-side)
+      // 1. Validate image actually shows the requested region
+      setStage("Validating image…");
+      const dataUrlForCheck = await fileToDataURL(file);
+      const { data: vData } = await supabase.functions.invoke("validate-image", {
+        body: { imageBase64: dataUrlForCheck, region },
+      });
+      if (vData && vData.valid === false) {
+        toast.error(`This doesn't look like a ${region} image. ${vData.reason || ""}`);
+        setAnalyzing(false);
+        setStage("");
+        return;
+      }
+
+      // 2. Color analysis (client-side)
       setStage("Extracting color features…");
       const colorFeatures = await analyzeImageFile(file);
       const ruleResult = applyRegionRules(region, colorFeatures);
 
-      // 2. Upload image to private storage
+      // 3. Upload image to private storage
       setStage("Uploading image securely…");
       const ext = file.name.split(".").pop() || "jpg";
       const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
