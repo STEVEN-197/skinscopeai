@@ -17,7 +17,7 @@ export function FloatingJarvis() {
         onClick={() => setOpen(true)}
         aria-label="Open JARVIS assistant"
         className={cn(
-          "fixed bottom-5 right-5 z-40 grid h-14 w-14 place-items-center rounded-full bg-gradient-hero text-primary-foreground shadow-glow transition-transform hover:scale-105",
+          "fixed bottom-24 right-4 z-40 grid h-14 w-14 place-items-center rounded-full bg-gradient-hero text-primary-foreground shadow-glow transition-transform hover:scale-105 sm:bottom-5 sm:right-5",
           open && "hidden",
         )}
       >

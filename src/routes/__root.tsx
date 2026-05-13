@@ -1,5 +1,6 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth-context";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 import appCss from "../styles.css?url";
 
@@ -29,15 +30,21 @@ export const Route = createRootRoute({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { title: "SkinScope AI — Personal Health Intelligence" },
       {
         name: "description",
         content:
-          "AI-powered web app analyzes skin, eye, and palm images to detect conditions like jaundice and burns.",
+          "SkinScope AI — visual health analysis, lab report intelligence, longitudinal monitoring and JARVIS assistant in one mobile-ready app.",
       },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
+      { name: "author", content: "SkinScope AI" },
+      { name: "theme-color", content: "#0ea5b7" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "SkinScope" },
+      { name: "application-name", content: "SkinScope AI" },
+      { property: "og:title", content: "SkinScope AI" },
       {
         property: "og:description",
         content:
@@ -64,10 +71,12 @@ export const Route = createRootRoute({
       },
     ],
     links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
+      { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "icon", href: "/favicon.ico", sizes: "any" },
+      { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32.png" },
+      { rel: "icon", type: "image/png", sizes: "16x16", href: "/favicon-16.png" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
     ],
   }),
   shellComponent: RootShell,
@@ -93,6 +102,7 @@ function RootComponent() {
   return (
     <AuthProvider>
       <Outlet />
+      <InstallPrompt />
     </AuthProvider>
   );
 }
