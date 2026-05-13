@@ -101,6 +101,7 @@ function RootComponent() {
   return (
     <AuthProvider>
       <Outlet />
+      <InstallPrompt />
     </AuthProvider>
   );
 }
