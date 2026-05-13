@@ -29,15 +29,21 @@ export const Route = createRootRoute({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { title: "SkinScope AI — Personal Health Intelligence" },
       {
         name: "description",
         content:
-          "AI-powered web app analyzes skin, eye, and palm images to detect conditions like jaundice and burns.",
+          "SkinScope AI — visual health analysis, lab report intelligence, longitudinal monitoring and JARVIS assistant in one mobile-ready app.",
       },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
+      { name: "author", content: "SkinScope AI" },
+      { name: "theme-color", content: "#0ea5b7" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "SkinScope" },
+      { name: "application-name", content: "SkinScope AI" },
+      { property: "og:title", content: "SkinScope AI" },
       {
         property: "og:description",
         content:
