@@ -1,0 +1,22 @@
+{
+  "name": "SkinScope AI",
+  "short_name": "SkinScope",
+  "description": "AI-powered personal health intelligence — visual analysis, lab reports, longitudinal monitoring, and JARVIS assistant.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f5fbfb",
+  "theme_color": "#0ea5b7",
+  "categories": ["health", "medical", "lifestyle"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "New Analysis", "short_name": "Analyze", "url": "/dashboard/analyze", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "JARVIS Assistant", "short_name": "JARVIS", "url": "/dashboard/jarvis", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Health Timeline", "short_name": "Timeline", "url": "/dashboard/timeline", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] }
+  ]
+}
