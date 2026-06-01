@@ -38,7 +38,7 @@ export const Route = createRootRoute({
           "SkinScope AI — visual health analysis, lab report intelligence, longitudinal monitoring and JARVIS assistant in one mobile-ready app.",
       },
       { name: "author", content: "SkinScope AI" },
-      { name: "theme-color", content: "#0ea5b7" },
+      { name: "theme-color", content: "#0F172A" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
@@ -86,7 +86,7 @@ export const Route = createRootRoute({
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <HeadContent />
       </head>

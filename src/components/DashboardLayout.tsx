@@ -62,7 +62,7 @@ export function DashboardLayout({ children }: { children?: ReactNode }) {
           <Logo />
         </Link>
       </div>
-      <nav className="flex flex-1 flex-col gap-1">
+      <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto pr-1">
         {navItems.map((item) => {
           const active =
             item.to === "/dashboard"
@@ -73,26 +73,36 @@ export function DashboardLayout({ children }: { children?: ReactNode }) {
               key={item.to}
               to={item.to}
               className={cn(
-                "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
                 active
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+                  ? "bg-gradient-to-r from-primary/20 via-primary/10 to-transparent text-foreground shadow-[inset_0_1px_0_0_oklch(1_0_0/0.08)]"
+                  : "text-sidebar-foreground/65 hover:bg-white/5 hover:text-sidebar-foreground",
               )}
             >
-              <item.icon className={cn("h-4 w-4 transition-colors", active && "text-primary")} />
+              {active && (
+                <span className="absolute left-0 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-r-full bg-gradient-to-b from-primary to-primary-glow" />
+              )}
+              <item.icon
+                className={cn(
+                  "h-4 w-4 transition-colors",
+                  active ? "text-primary-glow" : "group-hover:text-foreground/80",
+                )}
+              />
               {item.label}
             </Link>
           );
         })}
       </nav>
-      <div className="border-t border-sidebar-border pt-3">
-        <div className="mb-2 px-3 py-1">
-          <p className="truncate text-xs text-sidebar-foreground/60">Signed in as</p>
+      <div className="border-t border-white/5 pt-3">
+        <div className="mb-2 rounded-lg bg-white/[0.03] px-3 py-2">
+          <p className="truncate text-[10px] uppercase tracking-wider text-sidebar-foreground/50">
+            Signed in
+          </p>
           <p className="truncate text-sm font-medium text-sidebar-foreground">{user.email}</p>
         </div>
         <Button
           variant="ghost"
-          className="w-full justify-start gap-2 text-sidebar-foreground/80 hover:text-sidebar-foreground"
+          className="w-full justify-start gap-2 text-sidebar-foreground/80 hover:bg-white/5 hover:text-sidebar-foreground"
           onClick={handleSignOut}
         >
           <LogOut className="h-4 w-4" /> Sign out
@@ -105,7 +115,7 @@ export function DashboardLayout({ children }: { children?: ReactNode }) {
     <div className="min-h-screen bg-gradient-subtle">
       <div className="flex min-h-screen w-full">
         {/* Desktop sidebar */}
-        <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-sidebar-border bg-sidebar md:block">
+        <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-white/5 glass md:block">
           <SidebarContent />
         </aside>
 
@@ -113,10 +123,10 @@ export function DashboardLayout({ children }: { children?: ReactNode }) {
         {mobileOpen && (
           <div className="fixed inset-0 z-40 md:hidden">
             <div
-              className="absolute inset-0 bg-foreground/40 backdrop-blur-sm"
+              className="absolute inset-0 bg-background/70 backdrop-blur-md"
               onClick={() => setMobileOpen(false)}
             />
-            <aside className="absolute left-0 top-0 h-full w-72 bg-sidebar shadow-lg">
+            <aside className="absolute left-0 top-0 h-full w-72 border-r border-white/10 glass-strong shadow-2xl animate-[scale-in_0.2s_ease-out]">
               <SidebarContent />
             </aside>
           </div>
@@ -124,17 +134,20 @@ export function DashboardLayout({ children }: { children?: ReactNode }) {
 
         <div className="flex min-w-0 flex-1 flex-col">
           {/* Top bar (mobile) */}
-          <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/80 px-4 py-3 backdrop-blur md:hidden">
+          <header className="sticky top-0 z-30 flex items-center justify-between border-b border-white/5 glass px-4 py-3 md:hidden">
             <Logo />
             <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
               {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           </header>
 
-          <main className="flex-1 px-4 py-6 md:px-8 md:py-10">{children ?? <Outlet />}</main>
+          <main className="flex-1 px-4 py-6 md:px-8 md:py-10 animate-[fade-in_0.4s_ease-out]">
+            {children ?? <Outlet />}
+          </main>
         </div>
       </div>
       <FloatingJarvis />
     </div>
   );
 }
+
